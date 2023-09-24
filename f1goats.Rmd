@@ -1751,6 +1751,9 @@ Dal grafico notiamo che in qualifica Vettel è mediamente più forte sia di Schu
 #CHIA HA PIU' DNF?
 #-------------------------------------------------------------------------------
 ```{r}
+SCH_Arrival_omitNA = na.omit(SCH$Arrival_position)
+VET_Arrival_omitNA = na.omit(VET$Arrival_position)
+HAM_Arrival_omitNA = na.omit(HAM$Arrival_position)
 DNF_SCH = sum(SCH_Arrival_omitNA[SCH_Arrival_omitNA == DNF] / 20)
 DNF_SCH
 DNF_VET = sum(VET_Arrival_omitNA[VET_Arrival_omitNA == DNF] / 20)
@@ -1817,7 +1820,6 @@ Negli anni della RedBull Vettel prende il 38.94% delle pole (il migliore dei tre
 #Percentuali vittorie SCH, VET, HAM
 #numero di vittorie di SCHUMACHER in FERRARI
 ```{r message=FALSE}
-SCH_Arrival_omitNA = na.omit(SCH$Arrival_position)
 vittorie_ass_SCH = sum(SCH_Arrival_omitNA[SCH_Arrival_omitNA == 1])
 vittorie_rel_SCH = vittorie_ass_SCH / 181
 vittorie_96_06 = c("Schumacher", "Others")
@@ -1832,7 +1834,6 @@ ggplot(, aes(x="", y=c(vittorie_ass_SCH, 181-vittorie_ass_SCH), fill=vittorie_96
 ```
 #numero di vittorie di VETTEL in REDBULL
 ```{r message=FALSE}
-VET_Arrival_omitNA = na.omit(VET$Arrival_position)
 vittorie_ass_VET = sum(VET_Arrival_omitNA[VET_Arrival_omitNA == 1])
 vittorie_rel_VET = vittorie_ass_VET / 113
 vittorie_09_14 = c("Vettel", "Others")
@@ -1847,7 +1848,6 @@ ggplot(, aes(x="", y=c(vittorie_ass_VET, 113-vittorie_ass_VET), fill=vittorie_09
 ```
 #numero di vittorie di HAMILTON in MERCEDES
 ```{r message=FALSE}
-HAM_Arrival_omitNA = na.omit(HAM$Arrival_position)
 vittorie_ass_HAM = sum(HAM_Arrival_omitNA[HAM_Arrival_omitNA == 1])
 vittorie_rel_HAM = vittorie_ass_HAM / 200
 vittorie_13_22 = c("Hamilton", "Others")
