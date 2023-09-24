@@ -1,0 +1,3038 @@
+---
+title: "SCH_VET_HAM"
+author: "rudi fontanini"
+date: "2023-08-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,  warning = FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(leaflet)
+library(stringr)
+```
+DOMANDE CHE MI PONGO
+1.1) Tra gli anni più dominanti di ogni carriera, qual’è stato quello che ha visto il pilota in esame sbaragliare maggiormente la concorrenza?
+1.2)E l’anno più combattuto (ma che ha comunque visto il pilota vincere) quale è stato?
+2.1, 2.2) Quale pilota ha fatto più pole position e ha vinto più gare negli anni in cui ha fatto parte di quella Scuderia?
+3) Quali, tra le vetture dei tre campioni che hanno caratterizzato questi domini, permettevano di girare più forte sui circuiti, vista anche la presenza di tre generazioni di motori diverse?
+4) E se nel 1999 Schumacher non si fosse rotto la gamba, avrebbe avuto la chance di vincere il mondiale?
+
+
+
+
+#-------------------------------------------------------------------------------
+#GENERAZIONE DEL DATASET PRINCIPALE
+#-------------------------------------------------------------------------------
+
+#DATI UTILI SOLO ALLO SCOPO DI FAR QUADRARE I CONTI
+```{r}
+DNF = 20
+DNS = 20
+```
+#GENERAZIONE DI DUE COLONNE DEL DATASET ("Name", "Team")
+```{r echo=FALSE}
+nome <- c()
+scuderia <- c()
+
+for (y in 1:374){
+  if(y%%2 == 1){
+    nome[y] <- "Schumacher"
+    scuderia[y] <- "Ferrari"
+  }
+}
+for(y in 1:32){
+  if(y%%2 == 0){
+   nome[y] <- "Hill"
+   scuderia[y] <- "Williams Renault"
+  }
+}
+for(y in 33:66){
+  if(y%%2 == 0){
+   nome[y] <- "Villenueve"
+   scuderia[y] <- "Williams Renault"
+  }
+}
+for(y in 67:164){
+  if(y%%2 == 0){
+   nome[y] <- "Hakkinen"
+   scuderia[y] <- "Mclaren Mercedes"
+  }
+}
+for(y in 165:198){
+  if(y%%2 == 0){
+   nome[y] <- "Coulthard"
+   scuderia[y] <- "Mclaren Mercedes"
+  }
+}
+for(y in 199:232){
+  if(y%%2 == 0){
+   nome[y] <- "Barrichello"
+   scuderia[y] <- "Ferrari"
+  }
+}
+for(y in 233:264){
+  if(y%%2 == 0){
+   nome[y] <- "Räikkönen"
+   scuderia[y] <- "Mclaren Mercedes"
+  }
+}
+for(y in 265:300){
+  if(y%%2 == 0){
+   nome[y] <- "Barrichello"
+   scuderia[y] <- "Ferrari"
+  }
+}
+for(y in 301:374){
+  if(y%%2 == 0){
+   nome[y] <- "Alonso"
+   scuderia[y] <- "Renault"
+  }
+}
+for(y in 375:600){
+  if(y%%2 == 1){
+   nome[y] <- "Vettel"
+   scuderia[y] <- "Red Bull Racing Renault"
+  }
+}
+for(y in 375:408){
+  if(y%%2 == 0){
+   nome[y] <- "Button"
+   scuderia[y] <- "Brawn Mercedes"
+  }
+}
+for(y in 409:446){
+  if(y%%2 == 0){
+   nome[y] <- "Alonso"
+   scuderia[y] <- "Ferrari"
+  }
+}
+for(y in 447:484){
+  if(y%%2 == 0){
+   nome[y] <- "Button"
+   scuderia[y] <- "Mclaren Mercedes"
+  }
+}
+for(y in 485:524){
+  if(y%%2 == 0){
+   nome[y] <- "Alonso"
+   scuderia[y] <- "Ferrari"
+  }
+}
+for(y in 525:600){
+  if(y%%2 == 0){
+   nome[y] <- "Hamilton"
+   scuderia[y] <- "Mercedes"
+  }
+}
+for(y in 601:926){
+  if(y%%2 == 1){
+   nome[y] <- "Hamilton"
+   scuderia[y] <- "Mercedes"
+  }
+}
+for(y in 601:680){
+  if(y%%2 == 0){
+   nome[y] <- "Rosberg"
+   scuderia[y] <- "Mercedes"
+  }
+}
+for(y in 681:762){
+  if(y%%2 == 0){
+   nome[y] <- "Vettel"
+   scuderia[y] <- "Ferrari"
+  }
+}
+for(y in 763:838){
+  if(y%%2 == 0){
+   nome[y] <- "Bottas"
+   scuderia[y] <- "Mercedes"
+  }
+}
+for(y in 839:882){
+  if(y%%2 == 0){
+   nome[y] <- "Verstappen"
+   scuderia[y] <- "Red Bull Racing Honda"
+   
+  }
+}
+for(y in 883:926){
+  if(y%%2 == 0){
+   nome[y] <- "Verstappen"
+   scuderia[y] <- "Red Bull Racing RBPT"
+   
+  }
+}
+```
+#GENERAZIONE DI UNA COLONNA DEL DATASET ("Year")
+```{r}
+anno <- c()
+
+for (x in 1:32){
+  anno[x] <- 1996
+}
+for (x in 33:66){
+  anno[x] <- 1997
+}
+for (x in 67:98){
+  anno[x] <- 1998
+}
+for (x in 99:130){
+  anno[x] <- 1999
+}
+for (x in 131:164){
+  anno[x] <- 2000
+}
+for (x in 165:198){
+  anno[x] <- 2001
+}
+for (x in 199:232){
+  anno[x] <- 2002
+}
+for (x in 233:264){
+  anno[x] <- 2003
+}
+for (x in 265:300){
+  anno[x] <- 2004
+}
+for (x in 301:338){
+  anno[x] <- 2005
+}
+for (x in 339:374){
+  anno[x] <- 2006
+}
+for (x in 375:408){
+  anno[x] <- 2009
+}
+for (x in 409:446){
+  anno[x] <- 2010
+}
+for (x in 447:484){
+  anno[x] <- 2011
+}
+for (x in 485:524){
+  anno[x] <- 2012
+}
+for (x in 525:562){
+  anno[x] <- 2013
+}
+for (x in 563:600){
+  anno[x] <- 2014
+}
+for (x in 601:638){
+  anno[x] <- 2015
+}
+for (x in 639:680){
+  anno[x] <- 2016
+}
+for (x in 681:720){
+  anno[x] <- 2017
+}
+for (x in 721:762){
+  anno[x] <- 2018
+}
+for (x in 763:804){
+  anno[x] <- 2019
+}
+for (x in 805:838){
+  anno[x] <- 2020
+}
+for (x in 839:882){
+  anno[x] <- 2021
+}
+for (x in 883:926){
+  anno[x] <- 2022
+}
+```
+#GENERAZIONE DI UNA COLONNA DEL DATASET ("Grand_prix")
+```{r}
+gara <- c(
+#1996
+"Australia", "Australia", "Brasile", "Brasile", "Argentina", "Argentina", "Europa", "Europa", "San Marino","San Marino", "Monaco", "Monaco", "Spagna", "Spagna", "Canada", "Canada", "Francia", "Francia", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Portogallo", "Portogallo", "Giappone", "Giappone",
+#1997
+"Australia", "Australia", "Brasile", "Brasile", "Argentina", "Argentina", "San Marino","San Marino", "Monaco", "Monaco", "Spagna", "Spagna", "Canada", "Canada", "Francia", "Francia", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Austria", "Austria", "Lussemburgo", "Lussemburgo", "Giappone", "Giappone", "Europa", "Europa",
+#1998
+"Australia", "Australia", "Brasile", "Brasile", "Argentina", "Argentina", "San Marino","San Marino", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Francia", "Francia", "Gran Bretagna", "Gran Bretagna", "Austria", "Austria", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Lussemburgo", "Lussemburgo", "Giappone", "Giappone",
+ #1999
+"Australia", "Australia", "Brasile", "Brasile", "San Marino","San Marino", "Monaco", "Monaco", "Spagna", "Spagna", "Canada", "Canada", "Francia", "Francia", "Gran Bretagna", "Gran Bretagna", "Austria", "Austria", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Europa", "Europa", "Malesia", "Malesia", "Giappone", "Giappone",
+#2000
+"Australia", "Australia", "Brasile", "Brasile", "San Marino","San Marino", "Gran Bretagna", "Gran Bretagna", "Spagna", "Spagna", "Europa", "Europa", "Monaco", "Monaco", "Canada", "Canada", "Francia", "Francia", "Austria", "Austria", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Stati Uniti", "Stati Uniti", "Giappone", "Giappone", "Malesia", "Malesia",
+#2001
+"Australia", "Australia", "Malesia", "Malesia", "Brasile", "Brasile", "San Marino","San Marino", "Spagna", "Spagna", "Austria", "Austria", "Monaco", "Monaco", "Canada", "Canada", "Europa", "Europa", "Francia", "Francia", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Stati Uniti", "Stati Uniti", "Giappone", "Giappone",
+#2002
+"Australia", "Australia", "Malesia", "Malesia", "Brasile", "Brasile", "San Marino","San Marino", "Spagna", "Spagna", "Austria", "Austria", "Monaco", "Monaco", "Canada", "Canada", "Europa", "Europa", "Gran Bretagna", "Gran Bretagna", "Francia", "Francia", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Stati Uniti", "Stati Uniti", "Giappone", "Giappone",
+#2003
+"Australia", "Australia", "Malesia", "Malesia", "Brasile", "Brasile", "San Marino","San Marino", "Spagna", "Spagna", "Austria", "Austria", "Monaco", "Monaco", "Canada", "Canada", "Europa", "Europa", "Francia", "Francia", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Italia", "Italia", "Stati Uniti", "Stati Uniti", "Giappone", "Giappone",
+#2004
+"Australia", "Australia", "Malesia", "Malesia", "Bahrain", "Bahrain", "San Marino", "San Marino", "Spagna", "Spagna", "Monaco", "Monaco", "Europa", "Europa", "Canada", "Canada", "Stati Uniti", "Stati Uniti", "Francia", "Francia", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Cina", "Cina", "Giappone", "Giappone", "Brasile", "Brasile",
+#2005
+"Australia", "Australia", "Malesia", "Malesia", "Bahrain", "Bahrain", "San Marino", "San Marino", "Spagna", "Spagna", "Monaco", "Monaco", "Europa", "Europa", "Canada", "Canada", "Stati Uniti", "Stati Uniti", "Francia", "Francia", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Turchia", "Turchia", "Italia", "Italia", "Belgio", "Belgio", "Brasile", "Brasile", "Giappone", "Giappone", "Cina", "Cina",
+#2006
+"Bahrain", "Bahrain", "Malesia", "Malesia", "Australia", "Australia", "San Marino", "San Marino", "Europa", "Europa", "Spagna", "Spagna", "Monaco", "Monaco", "Gran Bretagna", "Gran Bretagna", "Canada", "Canada", "Stati Uniti", "Stati Uniti", "Francia", "Francia", "Germania", "Germania", "Ungheria", "Ungheria", "Turchia", "Turchia", "Italia", "Italia", "Cina", "Cina", "Giappone", "Giappone", "Brasile", "Brasile",
+#2009
+"Australia", "Australia", "Malesia", "Malesia", "Cina", "Cina", "Bahrain", "Bahrain", "Spagna", "Spagna", "Monaco", "Monaco", "Turchia", "Turchia", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Europa", "Europa", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore",  "Giappone", "Giappone", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi",
+#2010
+"Bahrain", "Bahrain", "Australia", "Australia", "Malesia", "Malesia", "Cina", "Cina", "Spagna", "Spagna", "Monaco", "Monaco", "Turchia", "Turchia", "Canada", "Canada", "Europa", "Europa", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore",  "Giappone", "Giappone","Corea del sud", "Corea del sud", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi",
+#2011
+"Australia", "Australia", "Malesia", "Malesia", "Cina", "Cina", "Turchia", "Turchia", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Europa", "Europa", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore",  "Giappone", "Giappone","Corea del sud", "Corea del sud", "India", "India",  "Abu Dhabi", "Abu Dhabi", "Brasile", "Brasile",
+#2012
+"Australia", "Australia", "Malesia", "Malesia", "Cina", "Cina", "Bahrain", "Bahrain", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Europa", "Europa", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore",  "Giappone", "Giappone","Corea del sud", "Corea del sud", "India", "India",  "Abu Dhabi", "Abu Dhabi", "Stati Uniti", "Stati Uniti", "Brasile", "Brasile",
+#2013
+"Australia", "Australia", "Malesia", "Malesia", "Cina", "Cina", "Bahrain", "Bahrain", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore","Corea del sud", "Corea del sud", "Giappone", "Giappone", "India", "India",  "Abu Dhabi", "Abu Dhabi", "Stati Uniti", "Stati Uniti", "Brasile", "Brasile",
+#2014
+"Australia", "Australia", "Malesia", "Malesia", "Bahrain", "Bahrain", "Cina", "Cina", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Austria", "Austria", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore", "Giappone", "Giappone", "Russia", "Russia", "Stati Uniti", "Stati Uniti", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi",
+#2015
+"Australia", "Australia", "Malesia", "Malesia", "Cina", "Cina", "Bahrain", "Bahrain", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Austria", "Austria", "Gran Bretagna", "Gran Bretagna", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore", "Giappone", "Giappone", "Russia", "Russia", "Stati Uniti", "Stati Uniti", "Messico", "Messico", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi",
+#2016
+"Australia", "Australia", "Bahrain", "Bahrain", "Cina", "Cina", "Russia", "Russia", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Europa", "Europa", "Austria", "Austria", "Gran Bretagna", "Gran Bretagna", "Ungheria", "Ungheria", "Germania", "Germania", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore",  "Malesia", "Malesia", "Giappone", "Giappone", "Stati Uniti", "Stati Uniti", "Messico", "Messico", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi",
+#2017
+"Australia", "Australia", "Cina", "Cina", "Bahrain", "Bahrain", "Russia", "Russia", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Azerbaijan", "Azerbaijan", "Austria", "Austria", "Gran Bretagna", "Gran Bretagna", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore",  "Malesia", "Malesia", "Giappone", "Giappone", "Stati Uniti", "Stati Uniti", "Messico", "Messico", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi",
+#2018
+"Australia", "Australia", "Bahrain", "Bahrain", "Cina", "Cina", "Azerbaijan", "Azerbaijan", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Francia", "Francia", "Austria", "Austria", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore", "Russia", "Russia", "Giappone", "Giappone", "Stati Uniti", "Stati Uniti", "Messico", "Messico", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi",
+#2019
+"Australia", "Australia", "Bahrain", "Bahrain", "Cina", "Cina", "Azerbaijan", "Azerbaijan", "Spagna", "Spagna", "Monaco", "Monaco", "Canada", "Canada", "Francia", "Francia", "Austria", "Austria", "Gran Bretagna", "Gran Bretagna", "Germania", "Germania", "Ungheria", "Ungheria", "Belgio", "Belgio", "Italia", "Italia", "Singapore", "Singapore", "Russia", "Russia", "Giappone", "Giappone", "Messico", "Messico", "Stati Uniti", "Stati Uniti", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi",
+#2020
+"Austria", "Austria", "Styria", "Styria", "Ungheria", "Ungheria", "Gran Bretagna", "Gran Bretagna", "70esimo anniversario", "70esimo anniversario", "Spagna", "Spagna", "Belgio", "Belgio", "Italia", "Italia", "Toscana", "Toscana", "Russia", "Russia", "Eifel", "Eifel", "Portogallo", "Portogallo", "Emilia Romagna", "Emilia Romagna", "Turchia", "Turchia", "Bahrain", "Bahrain", "Sakhir", "Sakhir", "Abu Dhabi", "Abu Dhabi",
+#2021
+"Bahrain", "Bahrain", "Emilia Romagna", "Emilia Romagna", "Portogallo", "Portogallo", "Spagna", "Spagna", "Monaco", "Monaco", "Azerbaijan", "Azerbaijan", "Francia", "Francia",  "Styria", "Styria", "Austria", "Austria", "Gran Bretagna", "Gran Bretagna", "Ungheria", "Ungheria", "Belgio", "Belgio", "Olanda", "Olanda", "Italia", "Italia", "Russia", "Russia", "Turchia", "Turchia", "Stati Uniti", "Stati Uniti", "Messico", "Messico", "Brasile", "Brasile", "Qatar", "Qatar", "Arabia Saudita", "Arabia Saudita", "Abu Dhabi", "Abu Dhabi",
+#2022
+"Bahrain", "Bahrain", "Arabia Saudita", "Arabia Saudita", "Australia", "Australia", "Emilia Romagna", "Emilia Romagna", "Miami", "Miami", "Spagna", "Spagna", "Monaco", "Monaco", "Azerbaijan", "Azerbaijan", "Canada", "Canada", "Gran Bretagna", "Gran Bretagna", "Austria", "Austria", "Francia", "Francia", "Ungheria", "Ungheria", "Belgio", "Belgio", "Olanda", "Olanda", "Italia", "Italia", "Singapore", "Singapore", "Giappone", "Giappone", "Stati Uniti", "Stati Uniti", "Messico", "Messico", "Brasile", "Brasile", "Abu Dhabi", "Abu Dhabi"
+)
+```
+#GENERAZIONE DI UNA COLONNA DEL DATASET ("Arrival_position")
+```{r}
+posizione_di_arrivo <- c(
+  #1996
+  DNF, 1, 3, 1, DNF, 1, 2, 4, 2, 1, DNF, DNF, 1, DNF, DNF, 1, DNF, 1, DNF, DNF, 4, 1, DNF, 2, 1, 5, 1, DNF, 3, 2, 2, 1,                                                                 
+  #1997
+  2, DNF, 5, 1, DNF, 1, 2, DNF, 1, DNF, 4, 1, 1, DNF, 1, 4, DNF, 1, 2, DNF, 4, 1, 1, 5, 6, 5, 6, 1, DNF, 1, 1, DNS, DNF, 3,                                                             
+  #1998
+  DNF, 1, 3, 1, 1, 2, 2,DNF, 3, 1, 10, 1, 1, DNF, 1, 3, 1, 2, 3, 2, 5, 2, 1, 6, DNF, DNF, 1, 4, 2, 1, DNF, 1,                                                                           
+  #1999
+  8, DNF, 2, 1, 1, DNF, 1, 3, 3, 1, DNF, 1, 5, 2, NA, DNF, NA, 3, NA, DNF, NA, 1, NA, 2, NA, DNF, NA, 5, 2, 3, 2, 1,                                                             
+  #2000
+  1, DNF, 1, DNF, 1, 2, 3, 2, 5, 1, 1, 2, DNF, 6, 1, 4, DNF, 2, DNF, 1, DNF, 2, 2, 1, 2, 1, 1, 2, 1, DNF, 1, 2, 1, 4,                                                                
+  #2001
+  1, 2, 1, 3, 2, 1, DNF, 2, 1, 5, 2, 1, 1, 5, 2, DNF, 1, 3, 1, 4, 2, DNF, DNF, DNF, 1, 3, 1, 2, 4, DNF, 2, 3, 1, 3,                                                                  
+  #2002
+  1, DNF, 3, DNF, 1, DNF, 1, 2, 1, DNF, 1, 2, 2, 7, 1, 3, 2, 1, 1, 2, 1, DNS, 1, 4, 2, 1, 1, 2, 2, 1, 2, 1, 1, 2,                                                                    
+  #2003
+  #CAMBIO SISTEMA PUNTI
+  4, 3, 6, 1, DNF, 2, 1, 2, 1, DNF, 1, 2, 3, 2, 1, 6, 5, DNF, 3, 4, 4, 3, 7, DNF, 8, 2, 1, 4, 1, 2, 8, 2,                                                                            
+  #2004
+  1, 2, 1, 4, 1, 2, 1, 6, 1, 2, DNF, 3, 1, 2, 1, 2, 1, 2, 1, 3, 1, 3, 1, 12, 1, 2, 2, 3, 2, 1, 12, 1, 1, DNF, 7, 3,                                                                  
+  #2005
+  DNF, 3, 7, 1, DNF, 1, 2, 1, DNF, 2, 7, 4, 5, 1, 2, DNF, 1, DNF, 3, 1, 6, 2, 5, 1, 2, 11, DNF, 2, 10, 2, DNF, 2, 4, 3, 7, 3, DNF, 1,                                                
+  #2006
+  2, 1, 6, 2, DNF, 1, 1, 2, 1, 2, 2, 1, 5, 1, 2, 1, 2, 1, 1, 5, 1, 2, 1, 5, DNF, DNF, 3, 2, 1, DNF, 1, 2, DNF, 1, 4, 2,                                                              
+  #2009
+  DNF, 1, DNF, 1, 1, 3, 2, 1, 4, 1, DNF, 1, 3, 1, 1, 6, 2, 5, DNF, 7, DNF, 7, 3, DNF, 8, 2, 4, 5, 1, 8, 4, 5, 1, 3,                                                                  
+  #2010
+  #CAMBIO SISTEMA PUNTI
+  4, 1, DNF, 4, 1, DNF, 6, 4, 3, 2, 2, 6, DNF, 8, 4, 3, 1, 8, 7, 14, 3, 1, 3, 2, 15, DNF, 4, 1, 2, 1, 1, 3, DNF, 1, 1, 3, 1, 7,                                                      
+  #2011
+  1, 6, 1, 2, 2, 4, 1, 6, 1, 3, 1, 3, 2, 1, 1, 6, 2, DNF, 4, DNF, 2, 1, 1, 3, 1, 2, 1, 2, 3, 1, 1, 4, 1, 2, DNF, 3, 2, 3,                                                            
+  #2012
+  2, 5, 11, 1, 5, 9, 1, 7, 6, 2, 4, 3, 4, 5, DNF, 1, 3, 2, 5, 1, 4, 5, 2, DNF, DNF, 3, 1, 3, 1, DNF, 1, 3, 1, 2, 3, 2, 2, 3, 6, 2,                                                   
+  #2013
+  3, 5, 1, 3, 4, 3, 1, 5, 4, 12, 2, 4, 1, 3, DNF, 4, 1, 5, 3, 1, 1, 3, 1, 9, 1, 5, 1, 5, 1, DNF, 1, 6, 1, 7, 1, 4, 1, 9,                                                             
+  #2014
+  DNF, DNF, 3, 1, 6, 1, 5, 1, 4, 1, DNF, 2, 3, DNF, DNF, 2, 5, 1, 4, 3, 7, 3, 5, DNF, 6, 1, 2, 1, 3, 1, 8, 1, 7, 1, 5, 2, 8, 1,                                                      
+  #2015
+  1, 2, 2, 3, 1, 2, 1, 3, 2, 1, 3, 1, 1, 2, 2, 1, 1, 2, 6, 8, 1, 2, 1, DNF, DNF, 4, 1, 2, 1, DNF, 1, 2, 2, 1, 2, 1, 2, 1,                                                            
+  #2016
+  2, 1, 3, 1, 7, 1, 2, 1, DNF, DNF, 1, 7, 1, 5, 5, 1, 1, 4, 1, 3, 1, 2, 1, 5, 3, 1, 2, 1, 3, 1, DNF, 3, 3, 1, 1, 2, 1, 2, 1, 2, 1, 2,                                                
+  #2017
+  2, 1, 1, 2, 2, 1, 4, 2, 1, 2, 7, 1, 1, 4, 5, 4, 4, 2, 1, 7, 4, 1, 1, 2, 1, 3, 1, DNF, 2, 4, 1, DNF, 1, 2, 9, 4, 4, 1, 2, 3,                                                        
+  #2018
+  2, 1, 3, 1, 4, 8, 1, 4, 1, 4, 3, 2, 5, 1, 1, 5, DNF, 3, 2, 1, 1, DNF, 1, 2, 2, 1, 1, 4, 1, 3, 1, 3, 1, 6, 3, 4, 4, 2, 1, 6, 1, 2,                                                  
+  #2019
+  2, 1, 1, 2, 1, 2, 2, 1, 1, 2, 1, 3, 1, 4, 1, 2, 5, 3, 1, 2, 9, DNF, 1, 8, 2, 3, 3, 2, 4, 5, 1, 2, 3, 1, 1, 3, 2, 1, 7, DNF, 1, 4,                                                  
+  #2020
+  4, 1, 1, 2, 1, 3, 1, 11, 2, 3, 1, 3, 1, 2, 7, 5, 1, 2, 3, 1, 1, DNF, 1, 2, 1, 2, 1, 14, 1, 8, NA, 8, 3, 2,                                                                        
+  #2021
+  1, 2, 2, 1, 1, 2, 1, 2, 7, 1, 15, DNF, 2, 1, 2, 1, 4, 1, 1, DNF, 2, 9, 3, 1, 2, 1, DNF, DNF, 1, 2, 5, 2, 2, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1,                                       
+  #2022
+  3, DNF, 10, 1, 4, DNF, 13, 1, 6, 1, 5, 1, 8, 3, 4, 1, 3, 1, 3, 7, 3, 2, 2, 1, 2, 1, DNF, 1, 4, 1, 5, 1, 9, 7, 5, 1, 2, 1, 2, 1, 2, 6, DNF, 1                                       
+  )
+```
+#GENERAZIONE DI UNA COLONNA DEL DATASET ("Points_scored")
+```{r}
+punti_weekend <- c(
+  #1996
+  0, 10, 4, 10, 0, 10, 6, 3, 6, 10, 0, 0, 10, 0, 0, 10, 0, 10, 0, 0, 3, 10, 0, 6, 10, 2, 10, 0, 4, 6, 6, 10,
+  #1997
+  6, 0, 2, 10, 0, 10, 6, 0, 10, 0, 3, 10, 10, 0, 10, 3, 0, 10, 6, 0, 3, 10, 10, 2, 1, 2, 1, 10, 0, 10, 10, 0, 0, 4,
+  #1998
+  0, 10, 4, 10, 10, 6, 6, 0, 4, 10, 0, 10, 10, 0, 10, 4, 10, 6, 4,10, 2, 10, 10, 1, 0, 0, 10, 3, 6, 10, 0, 10,
+  #1999
+  0, 0, 6, 10, 10, 0, 10, 4, 4, 10, 0, 10, 2, 6, 0, 0, 0, 4, 0, 0, 0, 10, 0, 6, 0, 0, 0, 2, 6, 4, 6, 10,
+  #2000
+  10, 0, 10, 0, 10, 6, 4, 6, 2, 10, 10, 6, 0, 1, 10, 3, 0, 6, 0, 10, 0, 6, 6, 10, 6, 10, 10, 6, 10, 0, 10, 6, 10, 3,
+  #2001
+  10, 6, 10, 4, 6, 10, 0, 6, 10, 2, 6, 10, 10, 2, 6, 0, 10, 4, 10, 3, 6, 0, 0, 0, 10, 4, 10, 6, 3, 0, 6, 4, 10, 4,
+  #2002
+  10, 0, 4, 0, 10, 0, 10, 6, 10, 0, 10, 6, 6, 0, 10, 4, 6, 10, 10, 6, 10, 0, 10, 3, 6, 10, 10, 6, 6, 10, 6, 10, 10, 6,
+  #CAMBIO SISTEMA PUNTI
+  #2003
+  5, 6, 3, 10, 0, 8, 10, 8, 10, 0, 10, 8, 6, 8, 10, 3, 4, 0, 6, 5, 5, 6, 2, 0, 1, 8, 10, 5, 10, 8, 1, 8,
+  #2004
+  10, 8, 10, 5, 10, 8, 10, 3, 10, 8, 0, 6, 10, 8, 10, 8, 10, 8, 10, 6, 10, 6, 10, 0, 10, 8, 8, 6, 8, 10, 0, 10, 10, 0, 2, 6,
+  #2005
+  0, 6, 2, 10, 0, 10, 8, 10, 0, 8, 2, 5, 4, 10, 8, 0, 10, 0, 6, 10, 3, 8, 4, 10, 8, 0, 0, 8, 0, 8, 0, 8, 5, 6, 2, 6, 0, 10,
+  #2006
+  8, 10, 3, 8, 0, 10, 10, 8, 10, 8, 8, 10, 4, 10, 8, 10, 8, 10, 10, 4, 10, 8, 10, 4, 1, 0, 6, 8, 10, 0, 10, 8, 0, 10, 5, 8,
+  #2009
+  0, 10, 0, 5, 10, 6, 8, 10, 5, 10, 0, 10, 6, 10, 10, 3, 8, 4, 0, 2, 0, 2, 6, 0, 1, 8, 5, 4, 10, 1, 5, 4, 10, 6,
+  #CAMBIO SISTEMA PUNTI
+  #2010
+  12, 25, 0, 12, 25, 0, 8, 12, 15, 18, 18, 8, 0, 4, 12, 15, 25, 4, 6, 0, 15, 25, 15, 18, 0, 8, 12, 25, 18, 25, 25, 15, 0, 25, 25, 15, 25, 6,
+  #2011
+  25, 8, 25, 18, 18, 12, 25, 8, 25, 15, 25, 15, 18, 25, 25, 8, 18, 0, 12, 0, 18, 25, 25, 15, 25, 18, 25, 18, 15, 25, 25, 12, 25, 18, 0, 15, 18, 15,
+  #2012
+  18, 10, 0, 25, 10, 2, 25, 6, 8, 18, 12, 15, 12, 10, 0, 25, 15, 18, 10, 25, 12, 10, 18, 0, 0, 15, 25, 15, 25, 0, 25, 15, 25, 18, 15, 18, 18, 15, 8, 18,
+  #2013
+  15, 10, 25, 15, 12, 15, 25, 10, 12, 0, 18, 12, 25, 15, 0, 12, 25, 10, 15, 25, 25, 15, 25, 2, 25, 10, 25, 10, 25, 0, 25, 8, 25, 6, 25, 12, 25, 2,
+  #2014
+  0, 0, 15, 25, 8, 25, 10, 25, 12, 25, 0, 18, 15, 0, 0, 18, 10, 25, 12, 15, 6, 15, 10, 0, 8, 25, 18, 25, 15, 25, 4, 25, 6, 25, 10, 18, 8, 50,
+  #2015
+  25, 18, 18, 15, 25, 18, 25, 15, 18, 25, 15, 25, 25, 18, 18, 25, 25, 18, 8, 4, 25, 18, 25, 0, 0, 12, 25, 18, 25, 0, 25, 18, 18, 25, 18, 25, 18, 25,
+  #2016
+  18, 25, 15, 25, 6, 25, 18, 25, 0, 0, 25, 6, 25, 10, 10, 25, 25, 12, 25, 15, 25, 18, 25, 12, 15, 25, 18, 25, 15, 25, 0, 15, 15, 25, 25, 18, 25, 18, 25, 18, 25, 18,
+  #2017
+  18, 25, 25, 18, 18, 25, 12, 18, 25, 18, 6, 25, 25, 12, 10, 12, 12, 18, 25, 6, 12, 25, 25, 18, 25, 15, 25, 0, 18, 12, 25, 0, 25, 18, 2, 12, 12, 25, 18, 15,
+  #2018
+  18, 25, 15, 25, 12, 4, 25, 12, 25, 12, 15, 18, 10, 25, 25, 10, 0, 15, 18, 25, 25, 0, 25, 18, 18, 25, 25, 12, 25, 15, 25, 15, 25, 8, 15, 12, 12, 18, 25, 8, 25, 18,
+  #2019
+  18, 26, 25, 18, 25, 18, 18, 25, 26, 18, 25, 15, 25, 13, 25, 18, 10, 15, 26, 18, 2, 0, 25, 4, 18, 15, 16, 18, 12, 10, 26, 18, 16, 25, 25, 15, 18, 25, 6, 0, 26, 12,
+  #2020
+  12, 25, 25, 18, 26, 15, 25, 0, 19, 15, 25, 16, 25, 18, 7, 10, 26, 18, 15, 26, 25, 0, 26, 18, 26, 18, 25, 0, 25, 4, 0, 4, 15, 18,
+  #2021
+  25, 18, 19, 25, 25, 18, 25, 19, 7, 25, 0, 0, 18, 26, 19, 25, 12, 26, 27, 3, 18, 2, 7.5, 12.5, 19, 25, 0, 2, 25, 18, 10, 18, 19, 25, 18, 25, 25, 20, 25, 19, 26, 18, 18, 26,
+  #2022
+  15, 0, 1, 25, 12, 0, 0, 34, 8, 26, 10, 25, 4, 15, 12, 25, 15, 25, 16, 6, 16, 27, 18, 25, 19, 25, 0, 26, 12, 26, 10, 25, 2, 6, 10, 25, 18, 25, 18, 25, 24, 13, 0, 25
+  )
+
+```
+#GENERAZIONE DI UNA COLONNA DEL DATASET ("Quali_position")
+```{r}
+posizione_qualifica <- c(
+  #1196
+  4, 2, 4, 1, 2, 1, 3, 1, 1, 2, 1, 2, 3, 1, 3, 1, 1, 2, 3, 1, 3, 1, 1, 2, 3, 2, 3, 1, 4, 1, 3, 2,
+  #1997
+  3, 1, 2, 1, 4, 1, 3, 1, 2, 3, 7, 1, 1, 2, 1, 4, 4, 1, 4, 9, 1, 2, 3, 1, 9, 4, 9, 1, 5, 2, 2, 1, 2, 1,
+  #1998
+  3, 1, 4, 1, 2, 3, 3, 2, 3, 1, 4, 1, 3, 2, 2, 1, 2, 1, 4, 3, 9, 1, 3, 1, 4, 1, 1, 3, 1, 3, 1, 2,
+  #1999
+  3, 1, 4, 1, 3, 1, 2, 1, 4, 1, 1, 2, 6, 14, 2, 1, NA, 1, NA, 1, NA, 1, NA, 1, NA, 1, NA, 3, 1, 4, 1, 2,
+  #2000
+  3, 1, 3, 1, 2, 1, 5, 3, 1, 2, 2, 3, 1, 5, 1, 4, 1, 4, 4, 1, 2, 4, 1, 3, 4, 1, 1, 3, 1, 3, 1, 2, 1, 2,
+  #2001
+  1, 6, 1, 8, 1, 5, 4, 1, 1, 3, 1, 7, 2, 1, 1, 3, 1, 5, 2, 3, 1, 3, 4, 5, 1, 2, 3, 9, 3, 6, 1, 7, 1, 7,
+  #2002
+  2, 1, 1, 3, 2, 8, 1, 2, 1, 2, 3, 1, 3, 5, 2, 3, 3, 4, 3, 2, 2, 3, 1, 3, 2, 1, 1, 3, 2, 4, 1, 2, 1, 2,
+  #2003
+  1, 15, 3, 7, 7, 4, 1, 6, 1, 20, 1, 2, 5, 2, 3, 20, 2, 1, 3, 4, 5, 3, 6, 5, 8, 7, 1, 4, 7, 1, 14, 8,
+  #2004
+  1, 2, 1, 3, 1, 2, 2, 4, 1, 5, 5, 7, 1, 7, 6, 7, 2, 1, 2, 10, 4, 2, 1, 8, 1, 2, 2, 6, 3, 1, 19, 1, 1, 15, 8, 1,
+  #2005
+  18, 13, 13, 1, 2, 1, 14, 2, 8, 3, 8, 2, 10, 6, 2, 3, 5, 6, 4, 1, 10, 1, 5, 3, 1, 6, 16, 3, 7 ,3, 7, 5, 7, 1, 14, 16, 6, 1,
+  #2006
+  1, 4, 4, 8, 11, 3, 1, 5, 2, 1, 3, 1, 20, 1, 3, 1, 5, 1, 1, 5, 1, 3, 2, 7, 12, 15, 2, 3, 2, 10, 6, 1, 2, 5, 10, 4,
+  #2009
+  3, 1, 3, 1, 1, 5, 3, 4, 2, 1, 4, 1, 1, 2, 1, 6, 4, 3, 2, 8, 4, 5, 8, 14, 9, 6, 2, 12, 1, 7, 16, 14, 2, 5,
+  #2010
+  1, 3, 1, 3, 3, 19, 1, 3, 2, 4, 3, NA, 3, 12, 3, 4, 1, 4, 1, 3, 1, 2, 1, 3, 4, 10, 6, 1, 2, 1, 1, 5, 1, 3, 2, 5, 1, 3,
+  #2011
+  1, 4, 1, 4, 1, 2, 1, 6, 2, 5, 1, 2, 1, 7, 1, 6, 2, 5, 3, 7, 1, 3, 1, 13, 1, 3, 1, 3, 1, 2, 2, 3, 1, 5, 1, 3, 1, 3,
+  #2012
+  6, 12, 6, 9, 11, 9, 1, 9, 7, 2, 10, 6, 1, 3, 1, 11, 4, 1, 2, 1, 3, 6, 11, 6, 6, 10, 3, 5, 1, 7, 2, 4, 1, 5, 3, 6, 1, 9, 4, 8,
+  #2013
+  1, 5, 1, 3, 9, 3, 2, 3, 3, 5, 3, 6, 1, 6, 3, 9, 2, 8, 2, 5, 2, 9, 1, 5, 1, 7, 1, 6, 2, 8, 1, 8, 2, 10, 1, 6, 1, 3,
+  #2014
+  13, 1, 2, 1, 11, 2, 3, 1, 10, 1, 4, 2, 3, 2, 13, 9, 2, 6, 6, 16, 2, 21, 3, 2, 8, 1, 4, 1, 9, 2, 11, 1, 17, 2, 6, 2, NA, 2,
+  #2015
+  1, 2, 1, 3, 1, 2, 1, 3, 2, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 4, 5, 6, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1,
+  #2016
+  1, 2, 1, 2, 22, 2, 10, 1, 1, 2, 3, 2, 1, 2, 10, 1, 1, 2, 1, 2, 2, 1, 2, 1, 21, 1, 1, 2, 3, 1, 1, 2, 2, 1, 1, 2, 1, 2, 1, 2, 1, 2,
+  #2017
+  1, 2, 1, 2, 2, 3, 4, 1, 1, 2, 14, 2, 1, 2, 1, 4, 3, 2, 1, 3, 4, 1, 1, 2, 1, 8, 5, 1, 1, 20, 1, 3, 1, 2, 3, 1, 20, 2, 2, 3,
+  #2018
+  1, 3, 4, 1, 4, 1, 2, 1, 1, 3, 3, 2, 4, 1, 1, 3, 2, 3, 1, 2, 14, 1, 1, 4, 1, 2, 3, 2, 1, 3, 2, 3, 1, 9, 1, 2, 3, 4, 1, 2, 1, 3,
+  #2019
+  1, 2, 2, 4, 2, 1, 2, 1, 2, 1, 1, 2, 2, 6, 1, 2, 2, 4, 2, 1, 1, 3, 3, 2, 3, 4, 2, 3, 2, 5, 2, 5, 4, 3, 4, 6, 5, 1, 3, 5, 1, 2,
+  #2020
+  2, 1, 1, 4, 1, 2, 1, 2, 2, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 3, 2, 1, 1, 2, 2, 1, 6, 9, 1, 2, NA, 1, 3, 2,
+  #2021
+  2, 1, 1, 3, 2, 3, 1, 2, 7, 2, 2, 3, 2, 1, 3, 1, 4, 1, 1, 2, 1, 3, 3, 1, 2, 1, 2, 3, 4, 20, 1, 3, 2, 1, 2, 3, NA, 1, 1, 2, 1, 3, 2, 1,
+  #2022
+  5, 2, 16, 4, 5, 2, 13, 1, 6, 3, 6, 2, 8, 4, 7, 3, 4, 1, 5, 2, 9, 1, 4, 2, 7, 10, 7, 1, 4, 1, 5, 2, 3, 8, 6, 1, 5, 3, 3, 1, 8, 2, 5, 1
+)
+```
+#GENERAZIONE DI UNA COLONNA DEL DATASET ("Quali_time")
+```{r}
+tempo_qualifica <- c(
+  #1996
+  "1:33.125", "1:32.371", "1:19.474", "1:18.111", "1:30.598", "1:30.346", "1:20.149", "1:18.941", "1:26.890", "1:27.105", "1:20.356", "1:20.866", "1:21.587", "1:20.650", "1:21.198", "1:21.059", "1:15.989", "1:16.058", "1:27.707", "1:26.875", "1:44.477", "1:43.912", "1:17.129", "1:17.182", "1:51.778", "1:50.980", "1:24.781", "1:24.204", "1:21.236", "1:20.330", "1:40.071", "1:39.370",
+  #1997
+  "1:31.472", "1:29.369", "1:16.594", "1:16.004", "1:25.773", "1:24.473", "1:23.955", "1:23.303", "1:18.235", "1:18.583", "1:18.313", "1:16.525", "1:18.095", "1:18.108", "1:14.548", "1:14.800", "1:21.977", "1:21.598", "1:42.181", "1:42.967", "1:14.672", "1:14.859", "1:50.293", "1:49.450", "1:23.624", "1:23.231", "1:11.056", "1:10.304", "1:17.385", "1:16.691", "1:36.133", "1:36.071", "1:21.072", "1:21.072",
+  #1998
+  "1:30.767", "1:30.010", "1:18.250", "1:17.092", "1:26.251", "1:26.632", "1:26.437", "1:26.075", "1:21.785", "1:20.262", "1:20.702", "1:19.798", "1:18.497", "1:18.282", "1:15.159", "1:14.929", "1:23.720", "1:23.271", "1:30.551", "1:30.517", "1:43.459", "1:41.838", "1:17.366", "1:16.973", "1:50.027", "1:48.682", "1:25.289", "1:25.679", "1:18.561", "1:18.940", "1:36.293", "1:36.471",
+  #1999
+  "1:31.781", "1:30.462", "1:17.578", "1:16.568", "1:26.538", "1:26.362", "1:20.611", "1:20.547", "1:22.277", "1:22.088", "1:19.298", "1:19.327", "1:41.127", "1:44.368", "1:25.223", "1:24.804", NA, "1:10.954", NA, "1:42.950", NA, "1:18.156", NA, "1:50.329", NA, "1:22.432", NA, "1:20.376", "1:39.688", "1:40.866", "1:37.470", "1:37.820",
+  #2000
+  "1:31.075", "1:30.556", "1:14.508", "1:14.111", "1:24.805", "1:24.714", "1:26.161", "1:25.741", "1:20.974", "1:21.052", "1:17.667", "1:17.785", "1:19.475", "1:20.241", "1:18.439", "1:18.985", "1:15.632", "1:16.050", "1:11.046", "1:10.410", "1:47.063", "1:47.162", "1:17.514", "1:17.922", "1:51.552", "1:50.646", "1:23.770", "1:23.967", "1:14.266", "1:14.428", "1:35.825", "1:35.834", "1:37.397", "1:37.860",
+  #2001
+  "1:26.892", "1:28.010", "1:35.220", "1:36.417", "1:13.780", "1:14.178", "1:23.593", "1:23.054", "1:18.201", "1:18.635", "1:09.562", "1:10.331", "1:17.631", "1:17.430", "1:15.782", "1:16.423", "1:14.960", "1:15.717", "1:12.999", "1:13.186", "1:20.447", "1:20.927", "	1:38.941", "1:39.574", "1:14.059", "1:14.860", "1:54.685", "1:58.008", "1:22.624", "1:23.148", "1:11.708", "1:12.500", "1:32.484", "1:33.916",
+  #2002
+  "1:25.848", "1:25.843", "1:35.266", "1:35.891", "1:13.241", "1:13.935", "1:21.091", "1:21.155", "1:16.364", "1:16.690", "1:08.704", "1:08.082", "1:17.118", "1:17.357", "1:13.018", "1:13.280", "1:30.035", "1:30.387", "1:19.042", "1:19.032", "1:12.008", "1:12.197", "1:14.389", "1:14.693", "1:13.392", "	1:13.333", "1:43.726", "1:44.335", "1:20.521", "1:20.706", "1:10.790", "1:11.058", "1:31.317", "1:31.749",
+  #2003
+  "1:27.173", "1:29.470", "1:37.393", "1:37.858", "1:14.130", "1:13.866", "	1:22.327", "1:23.148", "1:17.762", NA, "1:09.150", "1:09.189", "1:15.644", "1:15.295", "	1:16.047", NA, "1:31.555", "1:31.523", "1:15.480", "	1:15.533", "1:21.867", "1:21.695", "1:15.898", "1:15.874", "1:22.755", "1:22.742", "1:20.963", "1:21.466", "1:12.194", "1:11.670", "1:34.302", "1:33.272",
+  #2004
+  "1:24.408", "1:24.482", "1:33.074", "1:33.756", "1:30.139", "1:30.530", "1:20.011", "1:20.451", "1:15.022", "1:16.272", "1:14.516", "1:14.716", "1:28.351", "1:29.353", "1:13.355", "1:13.562", "1:10.400", "1:10.223", "1:13.971", "1:14.478", "1:18.710", "1:18.305", "1:13.306", "1:14.278", "1:19.146", "1:19.323", "1:56.304", "1:58.175", "1:20.637", "1:20.089", "1:33.185", "1:34.012", "1:33.542", "1:38.637", "1:11.386", "1:10.646",
+  #2005 forse è meglio non considerarlo visto che il tempo è la somma di due tempi di due sessioni (quali 1 e quali 2)
+  "1:57.931", "3:17.466", "3:11.633", "3:07.672", "3:02.357", "3:01.902", "2:47.244", "2:43.441", "2:33.551", "2:31.691", "2:34.736", "2:30.406", "1:31.585", "1:31.056", "1:15.475", "1:15.561", "1:11.369", "1:11.380", "1:14.572", "1:14.412", "1:21.275", "1:19.905", "1:15.006", "1:14.904", "1:19.882", "1:21.141", NA, "1:27.050", "1:21.721", "1:21.319", "1:47.476", "1:46.760", "1:12.976", "1:11.988", "1:52.676", "1:54.667", "1:35.301", "1:34.080",
+  #2006
+  "1:31.431", "1:31.702", "1:34.668", "1:35.747", "1:26.718", "1:25.778", "1:22.795", "1:23.709", "1:30.028", "1:29.819", "1:14.970", "1:14.648", "1:13.898", "1:13.962", "1:20.574", "1:20.253", "1:15.986", "1:14.942", "1:10.832", "1:12.449", "1:15.493", "1:15.785", "1:14.205", "1:15.282", "1:20.875", "1:21.364", "1:27.284", "1:27.321", "1:21.486", "1:25.688", "1:45.775", "1:44.360", "1:29.711", "1:30.371", NA, "1:11.567",
+  #2009
+  "1:26.830", "1:26.202", "1:35.518", "1:35.181", "1:36.184", "1:36.532", "1:34.015", "1:34.044", "1:20.660", "1:20.527", "1:15.271", "1:14.902","1:28.316", "1:28.421", "1:19.509", "1:20.289", "1:32.480", "1:32.473", "1:21.607", "1:22.511", "1:39.789", "1:39.821", "1:46.761", "1:45.251", "1:25.180", "1:25.030", "1:48.204", "1:47.141", "1:32.160", "1:32.962", "1:25.009", "1:22.504", "1:41.615", "1:41.892",
+  #2010
+  "1:54.101", "1:54.608", "1:23.919", "1:24.111", "1:50.789", "1:53.044", "1:34.558", "1:34.913", "1:20.101", "1:20.937", "1:14.227", NA, "1:26.760", "1:27.612", "1:15.420", "1:15.435", "1:37.587", "1:38.075", "1:29.615", "1:30.426", "1:13.791", "1:13.793", "1:18.773", "1:19.987", "1:46.127", "1:47.441", "1:22.675", "1:21.962", "1:45.457", "1:45.390", "1:30.785", "1:31.352", "1:35.585", "1:35.766", "1:15.519", "1:15.989", "1:39.394", "1:39.792",
+  #2011
+  "1:23.529", "1:24.779", "1:34.870", "1:35.200", "1:33.706", "1:34.421", "1:25.049", "1:25.982", "1:21.181", "1:21.996", "1:13.556", "1:13.997", "1:13.014", "1:13.838", "1:36.975", "1:37.645", "1:30.431", "1:31.898", "1:30.216", "1:31.288", "1:19.815", "1:20.024", "1:48.298", "2:05.150", "1:22.275", "1:22.777", "1:44.381", "1:44.804", "1:30.466", "1:30.475", "1:36.042", "1:36.126", "1:24.178", "1:24.950", "1:38.481", "1:38.631", "1:11.918", "1:12.283",
+  #2012
+  "1:25.668", "1:26.494", "1:36.634", "1:37.566", "1:36.031", "1:36.622", "1:32.422", NA, NA, "1:22.302", NA, "1:14.948", "1:13.784", "1:14.151", "1:38.086", "1:38.707", "1:52.199", "1:51.746", "1:41.026", "1:40.621", "1:21.416", "1:21.844", "1:48.792", "1:48.313", "1:24.802", "1:25.678", "1:46.905", "1:47.216", "1:30.839", "1:32.114", "1:37.316", "1:37.534", "1:25.283", "1:25.773", "1:41.073", "1:41.582", "1:35.657", "1:37.300", "1:12.760", "1:13.253",
+  #2013
+  "1:27.407", "1:28.493", "1:49.674", "1:50.727", NA, "1:34.788", "1:32.584", "1:32.667", "1:21.054", "1:21.218", "1:13.980", "1:14.824", "1:25.425", "1:26.504", "1:30.211", "1:30.979", "1:29.501", "1:31.209", "1:19.426", "1:19.791", "2:01.200", "2:03.482", "1:23.755", "1:24.142", "1:42.841", "1:43.938", "1:37.202", "1:38.038", "1:31.089", "1:31.665", "1:24.119", "1:25.826", "1:40.075", NA, "1:36.338", "1:37.376", "1:26.479", "1:27.539",
+  #2014
+  "1:44.668", "1:44.231", "1:59.486", "1:59.431", "1:34.985", "1:33.464", "1:54.960", "1:53.860", NA, "1:25.232", "1:16.547", "1:16.048", "1:15.548", "1:14.953", "1:09.801", NA, "1:37.386", "1:39.232", "1:17.577", "1:18.683", "1:23.201", NA, "2:07.717", "2:05.819", "1:25.436", "1:24.109", "1:45.902", "1:45.681", "1:34.432", "1:32.703", "1:40.052", "1:38.513", "1:39.621", "1:36.443", "1:10.938", "1:10.056", "1:41.893", "1:40.866",
+  #2015
+  "1:26.327", "1:26.921", "1:49.834", "1:50.299", "1:35.782", "1:35.824", "1:32.571", "1:33.129", "1:24.948", "1:24.681", "1:15.098", "1:15.440", "1:14.393", "1:14.702", "1:08.455", "1:08.655", "1:32.248", "1:32.361", "1:22.020", "1:22.595", "1:47.197", "1:47.655", "1:23.397", "1:23.703", "1:45.300", "1:45.415", "1:32.660", "1:32.584", "1:37.433", "1:37.113", "1:56.929", "1:56.824", "1:19.668", "1:19.480", "1:11.360", "1:11.282", "1:40.614", "1:40.237",
+  #2016
+  "1:23.837", "1:24.197", "1:29.493", "1:29.570", NA, "1:35.402", NA, "1:35.417", "1:22.000", "1:22.280", "1:13.942", "1:13.791", "1:12.812", "1:12.874", "2:01.954", "1:42.758", "1:07.922", "1:08.465", "1:29.287", "1:29.606", "1:20.108", "1:19.965", "1:14.470", "1:14.363", "1:50.033", "1:46.744", "1:21.135", "1:21.613", "1:43.288", "1:42.584", "1:32.850", "1:33.264", "1:30.660", "1:30.647", "1:34.999", "1:35.215", "1:18.704", "1:18.958", "1:10.736", "1:10.838", "1:38.755", "1:39.058",
+  #2017
+  "1:22.188", "1:22.456", "1:31.678", "1:31.864", "1:28.792", "1:29.247", "1:33.767", "1:33.194", "1:19.149", "1:19.200", "1:14.106", "1:12.221", "1:11.459", "1:11.789", "1:40.593", "1:41.841", "1:04.424", "1:04.293", "1:26.600", "1:27.356", "1:16.707", "1:16.276", "1:42.553", "1:42.795", "1:35.554", "1:38.064", "1:40.126", "1:39.491", "1:30.076", NA, "1:27.319", "1:27.791", "1:33.108", "1:33.347", "1:16.934", "1:16.488", NA, "1:08.360", "1:36.403", "1:36.777",
+  #2018
+  "1:21.164", "1:21.838", "1:28.220", "1:27.958", "1:31.675", "1:31.095", "1:41.677", "1:41.498", "1:16.173", "1:16.305", "1:11.232", "1:11.039", "1:10.996", "1:10.764", "1:30.029", "1:30.400", "1:03.149", "1:03.464", "1:25.892", "1:25.936", NA, "1:11.212", "1:35.658", "1:36.210", "1:58.179", "1:58.905", "1:19.294", "1:19.280", "1:36.015", "1:36.628", "1:31.532", "1:31.943", "1:27.760", "1:32.192", "1:32.237", "1:32.298", "1:14.894", "1:14.970", "1:07.281", "1:07.374", "1:34.794", "1:35.125",
+  #2019
+  "1:20.486", "1:20.598", "1:28.190", "1:28.256", "1:31.570", "1:31.547", "1:40.554", "1:40.495", "1:16.040", "1:15.406", "1:10.166", "1:10.252", "1:10.446", "1:11.101", "1:28.319", "1:28.605", "1:03.262", "1:03.537", "1:25.099", "1:25.093", "1:11.767", "1:12.129", "1:14.769", "1:14.590", "1:43.282", "1:43.415", "1:19.346", "1:19.354", "1:36.408", "1:37.146", "1:32.030", "1:32.632", "1:27.302", "1:27.293", "1:15.262", "1:15.338", "1:32.321", "1:32.029", "1:07.699", "1:07.874", "1:34.779", "1:34.973",
+  #2020
+  "1:02.951", "1:02.939", "1:19.273", "1:20.701", "1:13.447", "1:13.554", "1:24.303", "1:24.616", "1:25.217", "1:25.154", "1:15.584", "1:15.643", "1:41.252", "1:41.763", "1:18.887", "1:18.956", "1:15.144", "1:15.203", "1:31.304", "1:31.956", "1:25.525", "1:25.269", "1:16.652", "1:16.754", "1:13.706", "1:13.609", "1:52.560", "1:53.258", "1:27.264", "1:27.553", NA, "53.377", "1:35.332", "1:35.271",
+  #2021
+  "1:29.385", "1:28.997", "1:14.411", "1:14.498", "1:18.355", "1:18.746", "1:16.741", "1:16.777", "1:11.095", "1:10.576", "1:41.450", "1:41.563", "1:30.248", "1:29.990", "1:04.067", "1:03.841", "1:04.014", "1:03.720", "1:26.134", "1:26.209", "1:15.419", "1:15.840", "2:00.099", "1:59.765", "1:08.923", "1:08.885", "1:19.651", "1:19.555", "1:44.050", NA, "1:22.868", "1:23.196", "1:33.119", "1:32.910", "1:16.020", "1:16.225", "1:07.934", "1:08.372", "1:20.827", "1:21.424", "1:27.511", "1:27.653", "1:22.480", "1:22.109",
+  #2022
+  "1:31.238", "1:30.681", "1:30.343", "1:28.461", "1:18.825", "1:18.154", "1:21.138", "1:27.999", "1:29.625", "1:28.991", "1:19.512", "1:19.073", "1:12.560", "1:11.666", "1:42.924", "1:41.706", "1:22.891", "1:21.299", "1:41.995", "1:41.055", "1:13.151", "1:04.984", "1:31.765", "1:31.176", "1:18.142", "1:18.823", "1:45.503", "1:43.665", "1:10.648", "1:10.342", "1:21.524", "1:20.306", "1:49.466", "1:51.395", "1:30.261", "1:29.304", "1:34.947", "1:34.448", "1:18.084", "1:17.775", "1:12.611", "1:11.877", "1:24.508", "1:23.824"
+  )
+```
+#GENERAZIONE DI UNA COLONNA DEL DATASET ("Fastest_lap")
+```{r}
+giro_veloce <- c(
+  #1996
+  "1:33.651", "1:33.621", "1:22.889", "1:21.547", "1:30.659", "1:29.653", "1:21.769", "1:21.363", "1:28.966", "1:28.931", NA, "1:28.523", "1:45.517", "1:50.987", "1:24.163", "1:21.957", NA, "1:18.938", "1:30.944", "1:30.264", "1:48.612", "1:46.504", "1:20.912", "1:20.093", "1:53.905", "1:53.441", "1:26.110", "1:27.639", "1:24.059", "1:22.873", "1:44.445", "1:44.753",
+  #1997
+  "1:31.067", NA, "1:18.773", "1:18.397", NA, "1:28.028", "1:25.537", "1:25.997", "1:53.315", "1:55.218", "1:22.295", "1:22.534", "1:20.171" , "1:28.356", "1:17.910", "1:18.649", "1:24.475", "1:25.082", "1:46.603", "1:47.044", "1:19.684", "1:19.066", "1:55.340", "1:52.692", "1:25.863", "1:25.715", "1:12.169", "1:11.814", "1:29.314", "1:19.838", "1:39.268", "1:40.163", "1:23.692", "1:23.906",
+  #1998
+  "1:35.774", "1:31.649", "1:19.627", "1:19.337", "1:28.272", "1:28.261", "1:29.345", "1:30.115", "1:24.625", "1:24.275", "1:23.189", "1:22.948", "1:19.379", NA, "1:17.770", "1:17.523", "1:35.704", "1:35.961", "1:13.029", "1:13.412", "1:46.381", "1:46.252", "1:19.286", "1:20.545", "2:03.766", NA, "1:25.483", "1:25.139", "1:21.001", "1:20.450", "1:40.190", "1:40.426",
+  #1999
+  "1:32.112", "1:33.309", "1:18.616", "1:18.448", "1:28.547", "1:29.145", "1:22.288", "1:22.259", "1:24.982", "1:25.209", "1:20.709", "1:21.047", "1:21.014", "1:19.758", NA, "1:28.309", NA, "1:12.107", NA, "1:47.433", NA, "1:20.710", NA, "1:53.955", NA, "1:26.060", NA, "1:21.282", NA, "1:41.103", "1:41.319", "1:41.577",
+  #2000
+  "1:31.752", "1:32.433", "1:14.755", "1:15.456", "1:26.774", "1:26.523", "1:26.428", "1:26.217", "1:24.517", "1:24.470", "1:22.269", "1:22.288", "1:21.912", "1:21.571", "1:19.812", "1:19.049", "1:19.656", "1:19.746", NA, "1:11.837", NA, "1:44.698", "1:20.762", "1:20.028", "1:54.252", "1:54.469", "1:25.663", "1:25.595", "1:14.901", "1:15.773", "1:39.443", "1:39.189", "1:39.064", "1:38.543",
+  #2001
+  "1:28.214", "1:28.838", "1:41.833", "1:42.839", "1:16.545", "1:16.498", "1:27.229", "1:25.569", "1:21.151", "1:22.091", "1:11.030", "1:10.843", "1:19.770", "1:19.424", "1:18.176", "1:19.745", "1:18.612", "1:18.883", "1:16.286", "1:16.088", "1:23.928", "1:28.908", "1:42.853", "1:43.571", "1:17.436", "1:17.054", "1:49.758", "1:51.608", "1:25.525", "1:27.323", "1:14.841", "1:14.641", "1:37.133", "1:37.313",
+  #2002
+  "1:28.628", NA, "1:38.754", "1:38.931", "1:16.235", "1:16.511", "1:24.281", "1:24.170", "1:20.355", NA, "1:09.298", "1:09.320", "1:18.652", "1:18.023", "1:15.971", "1:16.100", "1:32.226", "1:32.785", "1:23.826", "1:23.083", "1:15.311", NA, "1:16.462", "1:16.845", "1:16.207", "1:16.891", "1:47.176", "1:48.196", "1:24.242", "1:23.657", "1:12.754", "1:12.738", "1:36.125", "1:36.345",
+  #2003
+  "1:27.759", "1:27.724", "1:36.412", "1:36.764", "1:24.040", "1:24.104", "1:22.491", "1:22.810", "1:20.307", NA, "1:08.337", "1:09.423", "1:14.707", "1:14.545", "1:16.378", "1:16.699", "1:32.904", "1:32.621", "1:16.303", "1:16.609", "	1:23.024", "1:22.911", "1:16.081", NA, "1:23.207", "1:22.372", "1:21.832", "1:22.032", "1:11.473", "1:11.617", "1:33.553", "1:34.488",
+  #2004
+  "1:24.125", "1:24.179", "1:34.819", "1:35.350", "1:30.252", "1:30.876", "1:20.411", "1:21.873", "1:17.450", "1:17.887", "1:14.439", "1:15.763", "1:29.468","1:30.101", "1:13.630", "1:13.622", "1:10.412", "1:10.399", "1:15.377", "1:16.035", "1:18.739", "1:19.296", "1:13.783", "1:14.963", "1:19.071", "1:19.213", "1:45.503", "1:45.666", "1:21.361", "1:21.046", "1:32.238", "1:32.455", "1:32.796", "1:32.730", "1:11.763", "1:11.672",
+  #2005
+  "1:26.261", "1:25.683", "1:36.982", "1:35.899", "1:32.886", "1:31.713", "1:21.858", "1:23.133", "1:15.648", "1:16.098", "1:15.842", "1:16.600", "1:31.503", "1:30.711", "1:14.868", "1:14.727", "1:11.497", NA, "1:17.714", "1:16.502", "1:21.675", "1:21.228", "1:16.099", "1:15.235", "1:21.476", "1:22.884", "1:26.991", "1:25.524", "1:23.584", "1:22.146", "1:57.444", "1:56.131", "1:12.800", "1:12.653", "1:32.763", "1:31.599", "1:35.877", "1:33.536",
+  #2006
+  "1:32.523", "1:32.534", "1:35.647", "1:34.803", "1:27.180", "1:26.189", "1:24.624", "1:24.569", "1:32.099", "1:32.532", "1:16.922", "1:16.723", "1:15.143", "1:15.671", "1:21.934", "1:21.599", "1:15.993", "1:15.911", "1:12.719", "1:13.316", "1:17.111", "1:17.770", "1:16.357", "1:17.256", "1:27.834", "1:29.408", "1:28.005", "1:28.245", "1:22.575", "1:23.121", "1:38.553", "1:37.586", "1:32.792", "1:32.676", "1:12.162", "1:12.961",
+  #2009
+  "1:28.140", "1:28.020", "1:38.427", "1:36.641", "1:52.627", "1:53.546", "1:34.756", "1:34.588", "1:23.090", "1:22.899", "1:17.634", "1:15.190", "1:27.622" ,"1:27.579", "1:20.735", "1:21.189", "1:34.089", "1:34.252", "1:23.457", "1:22.706", "1:39.992", "1:38.874", "1:47.263", NA, "1:25.194", "1:24.935", "1:48.398", "1:48.369", "1:32.572", "1:33.251", "1:13.890", "1:14.353", "1:40.279", "1:40.642",
+  #2010
+  "2:00.218", "1:58.287", "1:31.556", "1:29.707", "1:37.813", "1:37.231", "1:42.358", "1:44.134", "1:25.176", "1:24.846", "1:15.192", "1:15.905", "1:30.181", "1:30.011", "1:18.417", "1:18.207", "1:39.141", "1:39.889", "1:31.967", "1:30.874", "1:30.874", "1:15.880", "1:22.362", "1:23.195", "1:50.868", "1:51.374", "1:24.493", "1:24.139", "1:48.141", "1:47.976", "1:33.653", "1:33.823", "1:50.375" ,"1:50.257", "1:14.283", "1:13.855", "1:41.739", "1:42.227",
+  #2011
+  "1:29.844", "1:29.883", "1:41.539", "1:41.264", "1:41.321", "1:40.623", "1:29.937", "1:31.167", "1:27.162", "1:27.518", "1:16.267", "1:16.463", "1:17.217", "1:16.956", "1:41.852", "1:42.340", "1:35.565", "1:36.982", "1:34.587", "1:36.258", "1:23.875", "1:23.937", "1:50.451", "1:50.062", "1:26.557", "1:26.207", "1:48.688", "1:48.454", "1:36.916", "1:36.568", "1:39.605", "1:40.709", "1:27.249", "1:27.967", NA, "1:43.154", "1:16.076", "1:15.580",
+  #2012
+  "1:29.417", "1:30.277", "1:41.342", "1:41.680", "1:40.601", "1:41.152", "1:36.379", "1:38.203", "1:27.768", "1:27.390", "1:19.076", "1:18.857", "1:15.752", "1:17.820", "1:44.555", "1:43.666", "1:34.897", "1:35.385", "1:19.469", "1:19.044", "1:24.136", "1:25.738", "1:54.198", NA, "1:28.713", "1:28.835", "1:52.134", "1:52.709", "1:35.774", NA, "1:42.499", "1:42.442", "1:28.723", "1:28.630", "1:43.964", "1:44.090", "1:39.347", "1:39.672", "1:19.090", "1:18.623",
+  #2013
+  "1:30.409", "1:29.560", "1:40.446", NA, "1:36.808", "1:39.506", "1:36.961", "1:37.204", "1:27.036", "1:26.681", "1:16.577", "1:19.340", "1:16.561", "1:16.203", "1:35.018", "1:34.090", "1:34.164", "1:33.468", "1:24.553", "1:25.394", "1:50.756", "1:51.383", "1:27.190", "1:26.797", "1:48.574", "1:51.082", "1:41.380", "1:42.709", "1:35.317", "1:35.877", "1:28.116", "1:28.709", "1:43.893", "1:43.434", "1:39.856", "1:41.186", "1:15.624", "1:15.496",
+  #2014
+  "1:49.947", "1:40.287", "1:44.289", "1:43.066", "1:39.312", "1:37.108", "1:42.169", "1:41.196", "1:28.918", "1:29.483", "1:59.505", "1:19.361", "1:19.171", "1:18.942", "1:14.254", "1:12.217", "1:37.481", "1:37.176", "1:21.545", "1:19.908", "1:28.746", "1:27.380", "1:52.953", "1:53.707", "1:29.141", "1:28.004", "1:52.519", "1:50.417", "1:51.915", "1:51.600", "1:42.630", "1:41.606", "1:41.379", "1:41.929", "1:14.018", "1:13.555", "1:45.552", "1:45.599",
+  #2015
+  "1:30.945", "1:31.092", "1:43.125", "1:42.062", "1:42.208", "1:42.565", "1:37.857", "1:37.326", "1:28.270", "1:29.109", "1:18.676", "1:18.599", "1:17.472", "1:17.637", "1:11.475", "1:11.235", "1:37.093", "1:37.403", "1:25.727", "1:25.149", "1:52.504", "1:52.416", "1:26.672", "1:27.067", "1:52.505", "1:50.934", "1:36.145", "1:37.147", "1:40.573", "1:43.133", "1:40.738", "1:40.666", "1:20.723", "1:20.521", "1:14.832", "1:14.957", "1:44.517", "1:45.356",
+  #2016
+  "1:30.646", "1:30.557", "1:34.677", "1:34.482", "1:40.662", "1:40.418", "1:40.266", "1:39.094", NA, NA, "1:17.939", "1:18.763", "1:15.981", "1:15.599", "1:46.822", "1:46.485", "1:08.411", "1:08.491", "1:35.771", "1:35.548", "1:23.849", "1:23.670", "1:18.746", "1:19.122", "1:51.583", "1:51.746", "1:26.303", "1:26.599", "1:47.752", "1:50.296", "1:38.595", "1:36.424", "1:35.152", "1:36.049", "1:42.386", "1:41.897", "1:22.596", "1:22.792", "1:25.639", "1:26.222", "1:45.137", "1:45.261",
+  #2017
+  "1:27.033", "1:26.638", "1:35.378", "1:35.423", "1:32.798", "1:33.826", "1:38.398", "1:37.312", "1:23.593", "1:23.674", "1:15.825", "1:15.238", "1:14.551", "1:14.719", "1:43.469", "1:43.441", "1:07.411", "1:07.496", "1:30.621", "1:31.872", "1:20.818", "1:20.807", "1:46.603", "1:46.577", "1:23.488", "1:23.897", "1:45.008", NA, "1:34.452", "1:34.080", "1:33.780", "2:06.457", "2:06.457", "1:37.766", "1:19.945", "1:18.785", "1:11.845", "1:12.539", "1:41.473", "1:40.770",
+  #2018
+ "1:26.444", "1:26.469", "1:33.953", "1:34.453", "1:36.878", "1:37.479", "1:45.412", "1:45.530", "1:19.133", "1:19.128", "1:16.270", "1:16.065", "1:14.183", "1:13.964", "1:34.509", "1:34.485", "1:07.241", "1:07.082", "1:31.245", "1:30.696", "1:15.545", "1:17.290", "1:21.107", "1:20.056", "1:46.721", "1:46.644", "1:22.497", "1:22.505", "1:42.913", "1:44.669", "1:35.916", "1:35.990", "1:32.785", "1:32.318", "1:37.392", "1:38.280", "1:20.728", "1:19.522", "1:11.795", "1:10.831", "1:41.357", "1:40.867",
+  #2019
+ "1:26.057", "1:25.580", "1:33.528", "1:34.209", "1:35.892", "1:34.872", "1:44.166", "1:44.024", "1:18.492", "1:18.737", "1:16.167", "1:15.163", "1:14.813", "1:13.078", "1:32.764", "1:33.586", "1:08.050", "1:08.565", "1:27.369", "1:27.406", "1:17.485", "1:18.272", "1:18.528", "1:19.331", "1:46.580", "1:46.465", "1:21.779", "1:22.859", "1:44.914", "1:43.534", "1:35.761", "1:36.316", "1:30.983", "1:31.862", "1:19.461", "1:19.494", "1:38.446", "1:36.957", "1:11.082", "1:10.698", "1:39.283", "1:39.715",
+ #2020
+ "1:07.712", "1:07.657", "1:06.719", "1:07.534", "1:16.627", "1:17.665", "1:29.238", "1:29.265", "1:28.451", "1:29.765", "1:19.822", "1:18.183", "1:47.758", "1:47.983", "1:22.746", "1:23.961", "1:18.833", "1:19.432", "1:38.075", "1:37.030", "1:28.145", "1:31.884", "1:18.750", "1:19.345", "1:15.484", "1:15.902", "1:39.413", "1:38.193", "1:32.864", "1:33.352", NA, "56.563", "1:41.420", "1:41.131",
+ #2021
+ "1:34.015", "1:33.228", "1:16.702", "1:17.524", "1:20.933", "1:20.695", "1:20.665", "1:18.149", "1:12.909", "1:14.649", "1:44.769", "1:44.481", "1:37.410", "1:36.404", "1:07.058", "1:08.017", "1:08.126", "1:06.200", "1:29.699", NA, "1:18.715", "1:20.945", NA, NA, "1:11.097", "1:13.275", "1:25.870", "1:25.173", "1:37.575", "1:38.396", "1:32.763", "1:32.759", "1:38.485", "1:39.096", "1:19.820", "1:18.999", "1:11.982", "1:12.486", "1:25.084", "1:23.196", "1:30.734", "1:31.488", "1:26.615", "1:26.103",
+ #2022
+ "1:36.228", "1:35.440", "1:32.997", "1:31.772", "1:21.886", "1:21.677", "1:21.419", "1:18.446", "1:32.941", "1:31.361", "1:24.253", "1:25.456", "1:17.203", "1:16.052", "1:47.044", "1:46.050", "1:16.167", "1:15.839", "1:30.510", "1:32.354", "1:09.000", "1:07.275", "1:37.668", "1:37.491", "1:21.386", "1:22.126", NA, "1:22.126", "1:13.854", "1:13.652", "1:24.434", "1:24.745", "1:50.622", "1:49.142", "1:45.530", "1:44.911", "1:39.830", "1:39.541", "1:22.062", "1:22.046", "1:13.942", "1:14.195", "1:29.788", "1:29.392"
+    )
+```
+#GENERAZIONE DEL DATASET
+```{r}
+#codice per generare il dataset
+championship <- data.frame(
+                      "Year" = anno,
+                      "Name" = nome,
+                      "Grand_prix" = gara,
+                      "Quali_position" = posizione_qualifica,
+                      "Quali_time" = tempo_qualifica,
+                      "Arrival_position" = posizione_di_arrivo,
+                      "Points_scored" = punti_weekend,
+                      "Fastest_lap" = giro_veloce,
+                      "Team" = scuderia
+)
+championship
+```
+
+
+
+#------------------------------------------------------------------------------
+#CREAZIONE DI DATASET MINORI (A PARTIRE DAL DATASET PRIMARIO) PER SEMPLIFICARE LO STUDIO
+#-------------------------------------------------------------------------------
+
+#DATASET MINORI PER LO STUDIO
+```{r}
+SCH_VET_HAM <-  filter(championship, Name == 'Schumacher' | Name == 'Vettel' | Name == 'Hamilton')
+SCH_VET_HAM
+```
+```{r}
+SCH <- filter(championship, Name == 'Schumacher')
+SCH
+```
+```{r}
+VET <- filter(championship, Name == 'Vettel'& Team == 'Red Bull Racing Renault')
+VET
+```
+```{r}
+HAM <- filter(championship, Name == 'Hamilton')
+HAM
+```
+```{r}
+OPPONENT <- filter(championship, Name == 'Hill' | Name == 'Villenueve' | Name == 'Hakkinen' | Name == 'Coulthard' | Name == 'Barrichello' |  Name == 'Räikkönen' | Name == 'Alonso' | Name == 'Button' | Name == 'Rosberg' | Name == 'Bottas' | (Name == 'Vettel' & Team == 'Ferrari') | Name == 'Verstappen' | (Name == 'Vettel' & Team == 'Red Bull Racing Renault' & Year == '2014') | (Name == 'Hamilton' & Team == 'Mercedes' & Year == '2013'))
+OPPONENT
+```
+#FOCUS SU SCHUMACHER
+```{r}
+punti_SCH1996 = 0
+for (x in 1:16){
+    punti_SCH1996 <- SCH$Points_scored[x] + punti_SCH1996
+}
+punti_SCH1997 = 0
+for (x in 17:33){
+    punti_SCH1997 <- SCH$Points_scored[x] + punti_SCH1997
+}
+punti_SCH1998 = 0
+for (x in 34:49){
+    punti_SCH1998 <- SCH$Points_scored[x] + punti_SCH1998
+}
+punti_SCH1999 = 0
+for (x in 50:65){
+    punti_SCH1999 <- SCH$Points_scored[x] + punti_SCH1999
+}
+punti_SCH2000 = 0
+for (x in 66:82){
+    punti_SCH2000 <- SCH$Points_scored[x] + punti_SCH2000
+}
+punti_SCH2001 = 0
+for (x in 83:99){
+    punti_SCH2001 <- SCH$Points_scored[x] + punti_SCH2001
+}
+punti_SCH2002 = 0
+for (x in 100:116){
+    punti_SCH2002 <- SCH$Points_scored[x] + punti_SCH2002
+}
+punti_SCH2003 = 0
+for (x in 117:132){
+    punti_SCH2003 <- SCH$Points_scored[x] + punti_SCH2003
+}
+punti_SCH2004 = 0
+for (x in 133:150){
+    punti_SCH2004 <- SCH$Points_scored[x] + punti_SCH2004
+}
+punti_SCH2005 = 0
+for (x in 151:169){
+    punti_SCH2005 <- SCH$Points_scored[x] + punti_SCH2005
+}
+punti_SCH2006 = 0
+for (x in 170:187){
+    punti_SCH2006 <- SCH$Points_scored[x] + punti_SCH2006
+}
+punti_SCH = c(punti_SCH1996, punti_SCH1997, punti_SCH1998, punti_SCH1999, punti_SCH2000, punti_SCH2001, punti_SCH2002, punti_SCH2003, punti_SCH2004, punti_SCH2005, punti_SCH2006)
+punti_SCH
+```
+#FOCUS SU VETTEL
+```{r}
+punti_VET2009 = 0
+for (x in 1:17){
+    punti_VET2009 <- VET$Points_scored[x] + punti_VET2009
+}
+punti_VET2010 = 0
+for (x in 18:36){
+    punti_VET2010 <- VET$Points_scored[x] + punti_VET2010
+}
+punti_VET2011 = 0
+for (x in 37:55){
+    punti_VET2011 <- VET$Points_scored[x] + punti_VET2011
+}
+punti_VET2012 = 0
+for (x in 56:75){
+    punti_VET2012 <- VET$Points_scored[x] + punti_VET2012
+}
+punti_VET2013 = 0
+for (x in 76:94){
+    punti_VET2013 <- VET$Points_scored[x] + punti_VET2013
+}
+punti_VET2014 = 0
+for (x in 95:113){
+    punti_VET2014 <- VET$Points_scored[x] + punti_VET2014
+}
+punti_VET = c(punti_VET2009, punti_VET2010, punti_VET2011, punti_VET2012, punti_VET2013, punti_VET2014)
+punti_VET
+```
+#FOCUS SU HAMILTON
+```{r}
+punti_HAM2013 = 0
+for (x in 1:19){
+    punti_HAM2013 <- HAM$Points_scored[x] + punti_HAM2013
+}
+punti_HAM2014 = 0
+for (x in 20:38){
+    punti_HAM2014 <- HAM$Points_scored[x] + punti_HAM2014
+}
+punti_HAM2015 = 0
+for (x in 39:57){
+    punti_HAM2015 <- HAM$Points_scored[x] + punti_HAM2015
+}
+punti_HAM2016 = 0
+for (x in 58:78){
+    punti_HAM2016 <- HAM$Points_scored[x] + punti_HAM2016
+}
+punti_HAM2017 = 0
+for (x in 79:98){
+    punti_HAM2017 <- HAM$Points_scored[x] + punti_HAM2017
+}
+punti_HAM2018 = 0
+for (x in 99:119){
+    punti_HAM2018 <- HAM$Points_scored[x] + punti_HAM2018
+}
+punti_HAM2019 = 0
+for (x in 120:140){
+    punti_HAM2019 <- HAM$Points_scored[x] + punti_HAM2019
+}
+punti_HAM2020 = 0
+for (x in 141:157){
+    punti_HAM2020 <- HAM$Points_scored[x] + punti_HAM2020
+}
+punti_HAM2021 = 0
+for (x in 158:179){
+    punti_HAM2021 <- HAM$Points_scored[x] + punti_HAM2021
+}
+punti_HAM2022 = 0
+for (x in 180:201){
+    punti_HAM2022 <- HAM$Points_scored[x] + punti_HAM2022
+}
+punti_HAM = c(punti_HAM2013, punti_HAM2014, punti_HAM2015, punti_HAM2016, punti_HAM2017, punti_HAM2018, punti_HAM2019, punti_HAM2020, punti_HAM2021, punti_HAM2022)
+punti_HAM
+```
+
+
+#_______________________________________________________________________________
+#INIZIO ANALISI DEI DATI
+#_______________________________________________________________________________
+#-------------------------------------------------------------------------------
+#SCHUMACHER, VETTEL E HAMILTON: PUNTI FATTI OGNI ANNO
+#-------------------------------------------------------------------------------
+Cominciamo l'analisi dei dati con dei grafici che ci mostrano l'andamento dei punti fatti da ogni pilota nel corso della loro carriera vincente nella rispettiva scuderia.
+#punti di Schumacher in Ferrari
+```{r}
+ggplot() + geom_line(mapping = aes(x=1996:2006, y=punti_SCH), color = "red1") + geom_point(mapping = aes(x=1996:2006, y=punti_SCH)) + ylab("PUNTI") + xlab("") + scale_x_continuous(breaks = c(1996:2006)) + ggtitle("CARRIERA SCHUMACHER IN FERRARI: Punti fatti ogni anno") +scale_y_continuous(breaks = c(25, 50, 75, 100, 125, 150))
+```
+Il primo grafico mostra i punti ottenuti da Michael Schumacher nella sua carriera con la rossa che gli portò 5 dei suoi 7 titoli iridati. Schumacher vinse i mondiali con la scuderia di Maranello consecutivamente dal 2000 al 2004 compresi e questo lo verifichiamo facilmente nel grafico visto che 5 dei sei valori più alti rappresentano proprio quel periodo; vi sono però 3 dati che potremmo dire sorprendenti, quelli del 1999, dai quali si evince che qualcosa pare essere andato storto, quelli del 2003, visto che la vittoria del mondiale c'è stata comunque ma, rispetto alle altre vittorie i punti sono considerevolmente minori e quelli del 2006, dove, nonostante il punteggio elevato, la vittoria dell'ottavo titolo non è arrivata.
+#Punti di Vettel in Red Bull
+```{r}
+ggplot() + geom_line(mapping = aes(x=2009:2014, y=punti_VET), color = "darkblue") + geom_point(mapping = aes(x=2009:2014, y=punti_VET)) + ylab("PUNTI") + xlab("") + scale_x_continuous(breaks = c(2009:2014)) + ggtitle("CARRIERA VETTEL IN REDBULL: Punti fatti ogni anno") + scale_y_continuous(breaks = c(50, 100, 150, 200, 250, 300, 350, 400))
+```
+Passando a Sebastian Vettel e i suoi 4 titoli festeggiati back to back con la RedBull tra il 2010 e il 2013 possiamo notare due dati "anomali": quelli che segnano l'inizio (nel 2009) e la fine (nel 2014) della permanenza del pilota nella scuderia austriaca.
+#Punti di Hamilton in Mercedes
+```{r}
+ggplot() + geom_line(mapping = aes(x=2013:2022, y=punti_HAM), color = "cyan1") + geom_point(mapping = aes(x=2013:2022, y=punti_HAM)) + ylab("PUNTI") + xlab("") + scale_x_continuous(breaks = c(2013:2022)) + ggtitle("CARRIERA HAMILTON IN MERCEDES: Punti fatti ogni anno")
+```
+Chiudiamo questa prima parte di analisi con Lewis Hamilton che, con la Mercedes, lotterà per il titolo per 8 anni consecutivi, fallendo nell'impresa solo 2 volte, nel 2016 per mano dell'allora compagno di scuderia Nico Rosberg e nel 2021 all'ultima gara con il controverso episodio di Abu Dhabi per mano dell'olandese Max Verstappen su Redbull. Similmente a quanto detto per Sebastian Vettel i due dati anomali sono proprio quello che segna l'inizio della carriera dell'inglese con il motorista tedesco e quello ottenuto al termine dello scorso anno.
+
+Passiamo quindi ad analizzare in maniera più dettagliata la carriera di Schumacher:
+#1996
+L'avventura di Schumacher, trasfomatasi poi in favola, in Ferrari non ha la migliore delle partenze, il tedesco è campione per la seconda volta consecutiva con la Benetton ma non sarà in grado di difendere il titolo dalle Williams di Demon Hill (che vincerà poi il titolo) e Jacques Villenueve (che si piazzerà in seconda posizione). Il kaiser (soprannome di Schumacher) si piazzerà in terza posizione con 59 punti, distaccato dalla prima posizione di 38 punti. Il grafico sottostante ci mostra l'andamento della stagione del tedesco mettendo a confronto le posizioni di partenza con quelle di arrivo in ogni gara disputatasi quell'anno (16); notiamo una certa costanza nelle posizioni di qualifica che non scendono mai sotto la quarta posizione ma altrettanta costanza non la vediamo nelle posizioni di arrivo visti i 7 ritiri in 16 gare della stagione.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 1996
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH$Arrival_position[1:16], colour="Posizione di arrivo SCH")) + geom_point(mapping = aes(x=1:16, y=SCH$Arrival_position[1:16])) +
+  geom_line(mapping = aes(x=1:16, y=SCH$Quali_position[1:16], colour="Posizione di qualifica SCH")) + geom_point(mapping = aes(x=1:16, y=SCH$Quali_position[1:16])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 1996") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo SCH", "Posizione di qualifica SCH"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 1996
+```{r}
+SCH1996_Quali_Rel = cumsum(SCH$Quali_position[1:16]) / c(1:16)
+SCH1996_Arrival_Rel = cumsum(SCH$Arrival_position[1:16]) / c(1:16)
+SCH1996_Quali_Rel
+SCH1996_Arrival_Rel
+HIL1996_Arrival_Rel = cumsum(OPPONENT$Arrival_position[1:16]) / c(1:16)
+HIL1996_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH1996_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:16, y=SCH1996_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=SCH1996_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:16, y=SCH1996_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=HIL1996_Arrival_Rel, colour="Posizione di arrivo medio HIL")) + geom_point(mapping = aes(x=1:16, y=HIL1996_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 1996") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio HIL"), values = c("red", "yellow3", "blue"))
+```
+Complessivamente la stagione si conclude con una posizione media in qualifica di 2.63 e una posizione media a fine gara di 9.94.
+
+#1997
+Il 1997 vede il primo assalto al terzo titolo nei confronti di Jacques Villenueve ancora su Williams. L'assegnazione del titolo si deciderà all'ultimo appuntamento della stagione al gran premio d'Europa in Spagna, al termine del quale Villenueve verrà incoronato campione vincendo di 3 punti su Schumacher che verrà addirittura squalificato dal campionato nel tentativo di schiantarsi su Villenueve con l'intento di far ritirare ambedue le vetture; se così fosse successo Schumacher sarebbe stato campione per un solo punto di vantaggio.
+Rispetto al grafico della stagione 1996 vediamo che la costanza nelle posizioni di arrivo è maggiore (nonostante ci siano stati comunque 4 ritiri in 17 gare totali).
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 1997
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=SCH$Arrival_position[17:33], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:17, y=SCH$Quali_position[17:33])) +
+  geom_line(mapping = aes(x=1:17, y=SCH$Quali_position[17:33], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:17, y=SCH$Arrival_position[17:33])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 1997") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 1997
+```{r}
+SCH1997_Quali_Rel = cumsum(SCH$Quali_position[17:33]) / c(1:17)
+SCH1997_Arrival_Rel = cumsum(SCH$Arrival_position[17:33]) / c(1:17)
+SCH1997_Quali_Rel
+SCH1997_Arrival_Rel
+VIL1997_Arrival_Rel = cumsum(OPPONENT$Arrival_position[17:33]) / c(1:17)
+VIL1997_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=SCH1997_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:17, y=SCH1997_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=SCH1997_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:17, y=SCH1997_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=VIL1997_Arrival_Rel, colour="Posizione di arrivo medio VIL")) + geom_point(mapping = aes(x=1:17, y=VIL1997_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 1997") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio VIL"), values = c("red", "yellow3", "blue"))
+```
+Michael concluderà la stagione con un piazzamento medio in qualifica di 3.65 e di un piazzamento medio in gara di 6.82
+ 
+#1998
+Il secondo assalto di Schumacher al titolo iridato con la Ferrari porterà i Tifosi a sognare fino all'ultima gara in Giappone dove il pilota in rosso, in svantaggio su Mika Hakkinen di 4 punti, si ritirerà dalla competizione al giro 31 in seguito ad una foratura della postariore destra. Hakkinen vince anche sul circuito giapponese e si laurea campione con 14 punti di vantaggio.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 1998
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH$Arrival_position[34:49], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:16, y=SCH$Quali_position[34:49])) +
+  geom_line(mapping = aes(x=1:16, y=SCH$Quali_position[34:49], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:16, y=SCH$Arrival_position[34:49])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 1998") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 1998
+```{r}
+SCH1998_Quali_Rel = cumsum(SCH$Quali_position[34:49]) / c(1:16)
+SCH1998_Arrival_Rel = cumsum(SCH$Arrival_position[34:49]) / c(1:16)
+SCH1998_Quali_Rel
+SCH1998_Arrival_Rel
+HAK1998_Arrival_Rel = cumsum(OPPONENT$Arrival_position[34:49]) / c(1:16)
+HAK1998_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH1998_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:16, y=SCH1998_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=SCH1998_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:16, y=SCH1998_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=HAK1998_Arrival_Rel, colour="Posizione di arrivo medio HAK")) + geom_point(mapping = aes(x=1:16, y=HAK1998_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 1998") +
+  scale_y_reverse(breaks=c(3, 5, 7, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio HAK"), values = c("red", "yellow3", "black"))
+```
+Dai grafici vediamo che la consistanza nel portare buoni risultati di Schumacher aumenta di anno in anno tenendo comunque alte le performance in qulifica. Il resoconto della stagione ci dice che il piazzamento medio in qualifica è di 3.06 contro un piazzamento medio a fine gara di 4.93.
+
+
+#1999
+La stagione 1999 è particolare perché, seppur mostrandoci uno Schumacher in grado di lottare per il titolo, lo ritroveremo a fine anno in 5 posizione nel mondiale piloti. Schumacher si ruppe la gamba all'ottavo appuntamento della stagione e ciò lo costrinse a saltare altri 6 appuntamenti e ciò fu fatale per il campionato.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 1999
+```{r message=FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH$Arrival_position[50:65], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:16, y=SCH$Quali_position[50:65])) +
+  geom_line(mapping = aes(x=1:16, y=SCH$Quali_position[50:65], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:16, y=SCH$Arrival_position[50:65])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 1999") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3")) +
+  ylim(23, 1)
+
+#NOTE: schumacher si ruppe la gamba e non partecipò proprio a quelle edizioni dei grand prix
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 1999
+```{r}
+SCH1999_Quali_Rel = c( cumsum(SCH$Quali_position[50:57]) / c(1:8), NA, NA, NA, NA, NA, NA, c( ((3.125*8)+cumsum(SCH$Quali_position[64:65]))/c(9, 10) ) )
+SCH1999_Arrival_Rel = c( cumsum(SCH$Arrival_position[50:56]) / c(1:7), NA, NA, NA, NA, NA, NA, NA, c( ((30)+cumsum(SCH$Arrival_position[64:65]))/c(8, 9) ) )
+SCH1999_Quali_Rel
+SCH1999_Arrival_Rel
+HAK1999_Arrival_Rel = cumsum(OPPONENT$Arrival_position[50:56]) / c(1:16)
+HAK1999_Arrival_Rel
+```
+# --> grafico
+```{r message=FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH1999_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:16, y=SCH1999_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=SCH1999_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:16, y=SCH1999_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=HAK1999_Arrival_Rel, colour="Posizione di arrivo medio HAK")) + geom_point(mapping = aes(x=1:16, y=HAK1999_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 1999") +
+  scale_y_reverse(breaks=c(3, 5, 7, 10, 15, 20, 22)) +
+scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio HAK"), values = c("red", "yellow3", "black"))
+```
+Schumacher concluderà il camionato con una media di 2.7 per la posizione di qualifica e una media di 3.78 per il posizionamento medio.
+E SE SCHUMACHER NON SI FOSSE ROTTO?
+#grafico posizionamenti assoluti con predizione
+```{r message=FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH$Arrival_position[50:65], colour="Posizione di arrivo SCH")) + geom_point(mapping = aes(x=1:16, y=SCH$Quali_position[50:65])) +
+  geom_line(mapping = aes(x=1:16, y=SCH$Quali_position[50:65], colour="Posizione di qualifica SCH")) + geom_point(mapping = aes(x=1:16, y=SCH$Arrival_position[50:65])) +
+  geom_line(mapping = aes(x=1:16, y=OPPONENT$Arrival_position[50:65], colour="Posizione di arrivo HAK")) + geom_point(mapping = aes(x=1:16, y=SCH$Quali_position[50:65])) +
+  geom_smooth(mapping = aes(x=1:16, y=SCH$Arrival_position[50:65], colour="Posizione di arrivo SCH")) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. PREDICTION 1999") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo SCH", "Posizione di qualifica SCH", "Posizione di arrivo HAK"), values = c("red", "yellow3", "black")) +
+  ylim(23, 1)
+
+#NOTE: schumacher si ruppe la gamba e non partecipò proprio a quelle edizioni dei grand prix
+```
+Dal Grafico possiamo notare che Schumacher poteva combattere per il titolo se non si fosse rotto la gamba quindi proviamo a modificare i dati di Mika hakkinen sulla base del disegno del grafico soprastante.
+#grafico con posizionamenti relativi con predizione + adattamento dati Hakkinen
+```{r message=FALSE}
+HAK1999_Arrival_Ass_Adapt = c(20, 1, 20, 3, 1, 1, 2, 20, 4, 20, 1, 3, 20, 6, 4, 1)
+HAK1999_Arrival_Rel_Adapt = cumsum(HAK1999_Arrival_Ass_Adapt) / c(1:16)
+
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH1999_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:16, y=SCH1999_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=SCH1999_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:16, y=SCH1999_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=HAK1999_Arrival_Rel_Adapt, colour="Posizione di arrivo medio HAK")) + geom_point(mapping = aes(x=1:16, y=HAK1999_Arrival_Rel_Adapt)) +
+  geom_smooth(mapping = aes(x=1:16, y=SCH1999_Arrival_Rel, colour="Posizione di arrivo medio SCH")) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. PREDICTION 1999") +
+  scale_y_reverse(breaks=c(3, 5, 7, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio HAK"), values = c("red", "yellow3", "black"))
+```
+Dal grafico emerge che Schumacher avrebbe avuto una maggiore consistenza in termini di posizionamento medio a fine gara e questo spesso, nella formula 1, coincide con la vittoria del titolo.
+
+
+#2000
+La stagione 2000 vedrà Schumacher vincere il primo dei 5 titoli con la scuderia italiana. Mika Hakkinen battaglierà con il tedesco fino alla fine ma nelle ultime 4 gare il kaiser le vince tutte e conquista il titolo con 1 gara di anticipo sul tracciato nipponico.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2000
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=SCH$Arrival_position[66:82], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:17, y=SCH$Quali_position[66:82])) +
+  geom_line(mapping = aes(x=1:17, y=SCH$Quali_position[66:82], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:17, y=SCH$Arrival_position[66:82])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2000") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2000
+```{r}
+SCH2000_Quali_Rel = cumsum(SCH$Quali_position[66:82]) / c(1:17)
+SCH2000_Arrival_Rel = cumsum(SCH$Arrival_position[66:82]) / c(1:17)
+HAK2000_Arrival_Rel = cumsum(OPPONENT$Arrival_position[66:82]) / c(1:17)
+SCH2000_Quali_Rel
+SCH2000_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=SCH2000_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:17, y=SCH2000_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=SCH2000_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:17, y=SCH2000_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=HAK2000_Arrival_Rel, colour="Posizione di arrivo medio HAK")) + geom_point(mapping = aes(x=1:17, y=HAK2000_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2000") +
+  scale_y_reverse(breaks=c(1, 3, 5, 7, 9)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio HAK"), values = c("red", "yellow3", "black"))
+```
+I grafici ci raccontano di uno Schumacher che a fine stagione conclude con un piazzamento medio in qualifica di 2.00 e un piazzamento medio a fine gara di 5.94.
+
+#2001
+Nel 2001 non c'è storia, Michael Schumacher è l'uomo da battere. La stagione è a senso unico e si conclude con 9 vittorie in 17 gare a favore del tedesco; lato punti Schu,acher vince con 123 punti contro i 65 del secondo classificato David Coulthard su McLaren.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2001
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=SCH$Arrival_position[83:99], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:17, y=SCH$Quali_position[83:99])) +
+  geom_line(mapping = aes(x=1:17, y=SCH$Quali_position[83:99], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:17, y=SCH$Arrival_position[83:99])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2001") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2001
+```{r}
+SCH2001_Quali_Rel = cumsum(SCH$Quali_position[83:99]) / c(1:17)
+SCH2001_Arrival_Rel = cumsum(SCH$Arrival_position[83:99]) / c(1:17)
+COU2001_Arrival_Rel = cumsum(OPPONENT$Arrival_position[83:99]) / c(1:17)
+SCH2001_Quali_Rel
+SCH2001_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=SCH2001_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:17, y=SCH2001_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=SCH2001_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:17, y=SCH2001_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=COU2001_Arrival_Rel, colour="Posizione di arrivo medio COU")) + geom_point(mapping = aes(x=1:17, y=COU2001_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO  REL. 2001") +
+  scale_y_reverse(breaks=c(1, 2, 3, 4, 5, 6)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio COU"), values = c("red", "yellow3", "black"))
+```
+Anche lato consistenza non c'è storia, Michael ottiene un piazzamento medio in qualifica di 1.71 e uno in gara di 3.71.
+
+#2002
+è però il 2002 l'anno in cui la Ferrari e Schumacher mettono completamente i piedi in testa agli avversari: 11 vittorie per il kaiser, che non scenderà mai dal podio da inizio a fine stagione, e 4 per il compagno di scuderia Rubens Barrchello che insieme fanno 15 vittorie su 17 gare per la Ferrari. Il confronto è imbarazzante: 144 punti per Schumacher e 77 per Barrichello che chiude in seconda posizione nel mondiale.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2002
+```{r message = FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=SCH$Arrival_position[100:116], colour="Posizione di arrivo SCH")) + geom_point(mapping = aes(x=1:17, y=SCH$Quali_position[100:116])) +
+  geom_line(mapping = aes(x=1:17, y=SCH$Quali_position[100:116], colour="Posizione di qualifica SCH")) + geom_point(mapping = aes(x=1:17, y=SCH$Arrival_position[100:116])) +
+  geom_line(mapping = aes(x=1:17, y=OPPONENT$Arrival_position[100:116], colour="Posizione di arrivo BAR")) + geom_point(mapping = aes(x=1:17, y=OPPONENT$Arrival_position[100:116])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2002") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo SCH", "Posizione di qualifica SCH", "Posizione di arrivo BAR"), values = c("red", "yellow3", "green")) +
+  ylim(20, 1)
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2002
+```{r}
+SCH2002_Quali_Rel = cumsum(SCH$Quali_position[100:116]) / c(1:17)
+SCH2002_Arrival_Rel = cumsum(SCH$Arrival_position[100:116]) / c(1:17)
+BAR2002_Arrival_Rel = cumsum(OPPONENT$Arrival_position[100:116]) / c(1:17)
+SCH2002_Quali_Rel
+SCH2002_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=SCH2002_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:17, y=SCH2002_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=SCH2002_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:17, y=SCH2002_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=BAR2002_Arrival_Rel, colour="Posizione di arrivo medio BAR")) + geom_point(mapping = aes(x=1:17, y=BAR2002_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2002") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio BAR"), values = c("red", "yellow3", "green"))
+```
+Una consistenza incredibile per Schumacher: una qualifica media in posizione 1.82 e un piazzamento medio a 1.41 che vedono il 2002 essere una delle stagioni più dominate della storia della formula 1.
+
+#2003
+Dopo due anni di dominio incontrastato si presenta un nuovo sfidante al titolo in Kimi Räikkönen su Mclaren. La rincorsa al titolo terminerà solo all'iltima gara con Schumacher che vincerà il mondiale per solo 2 punti sul finlandese.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2003
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH$Arrival_position[117:132], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:16, y=SCH$Quali_position[117:132])) +
+  geom_line(mapping = aes(x=1:16, y=SCH$Quali_position[117:132], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:16, y=SCH$Arrival_position[117:132])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO Ass. 2003") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2003
+```{r}
+SCH2003_Quali_Rel = cumsum(SCH$Quali_position[117:132]) / c(1:16)
+SCH2003_Arrival_Rel = cumsum(SCH$Arrival_position[117:132]) / c(1:16)
+RAI2003_Arrival_Rel = cumsum(OPPONENT$Arrival_position[117:132]) / c(1:16)
+SCH2003_Quali_Rel
+SCH2003_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:16, y=SCH2003_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:16, y=SCH2003_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=SCH2003_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:16, y=SCH2003_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:16, y=RAI2003_Arrival_Rel, colour="Posizione di arrivo medio RAI")) + geom_point(mapping = aes(x=1:16, y=RAI2003_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. SCH_2003") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio RAI"), values = c("red", "yellow3", "black"))
+```
+La stagione termina con ua qualifica media di 4.25 e un posizionamento in gara medio di 4.625.
+
+#2004
+Il 2004 è l'ultimo anno in cui la Ferrari e Schumacher domineranno assieme. Una stagione che comincia fortissimo, con 12 vittorie in 13 gare ad opera di Michael e che continuerà senza intoppi portando Schumacher a vincere il titolo per la settima volta.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2004
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:18, y=SCH$Arrival_position[133:150], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:18, y=SCH$Quali_position[133:150])) +
+  geom_line(mapping = aes(x=1:18, y=SCH$Quali_position[133:150], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:18, y=SCH$Arrival_position[133:150])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2004") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2004
+```{r}
+SCH2004_Quali_Rel = cumsum(SCH$Quali_position[133:150]) / c(1:18)
+SCH2004_Arrival_Rel = cumsum(SCH$Arrival_position[133:150]) / c(1:18)
+BAR2004_Arrival_Rel = cumsum(OPPONENT$Arrival_position[133:150]) / c(1:18)
+SCH2004_Quali_Rel
+SCH2004_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:18, y=SCH2004_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:18, y=SCH2004_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:18, y=SCH2004_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:18, y=SCH2004_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:18, y=BAR2004_Arrival_Rel, colour="Posizione di arrivo medio BAR")) + geom_point(mapping = aes(x=1:18, y=BAR2004_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2004") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio BAR"), values = c("red", "yellow3", "green"))
+```
+Altra stagione di una consistenza incredibile per il tedesco, piazzamento medio in qualifica di 3.39 e in gara di 3.11.
+
+#2005
+Stagoine incredibilmente sotto tono per Schumacher che aveva abituato gli spettatori ad un dominio lungo ormai 5 anni. Questa volta il titolo se lo giocano i giovani Räikkönen e Alonso, rispettivamente su McLaren e Renault.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2005
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=SCH$Arrival_position[151:169], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:19, y=SCH$Quali_position[151:169])) +
+  geom_line(mapping = aes(x=1:19, y=SCH$Quali_position[151:169], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:19, y=SCH$Arrival_position[151:169])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2005") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2005
+```{r}
+SCH2005_Quali_Rel = cumsum(SCH$Quali_position[151:169]) / c(1:19)
+SCH2005_Arrival_Rel = cumsum(SCH$Arrival_position[151:169]) / c(1:19)
+ALO2005_Arrival_Rel = cumsum(OPPONENT$Arrival_position[151:169]) / c(1:19)
+SCH2005_Arrival_Rel
+SCH2005_Quali_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=SCH2005_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:19, y=SCH2005_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=SCH2005_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:19, y=SCH2005_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=ALO2005_Arrival_Rel, colour="Posizione di arrivo medio ALO")) + geom_point(mapping = aes(x=1:19, y=ALO2005_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2005") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio ALO"), values = c("red", "yellow3", "dodgerblue"))
+```
+La stagione si chiude con un poiazzamento medio i nqualifica di 8.26 e uno in gara di 9.53.
+
+#2006
+Il 2006 è l'anno in cui Schumacher ci proverà per l'ultima volta a vincere un titolo in f1. Sfortunatamente per lui ciò non accadrà e dovrà accontentarsi del secondo posto nella classifica piloti. Il 2006 è anche l'ultimo anno di Schumacher in Ferrari e in f1, prima del suo ritorno nel 2010 con la Mercedes.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2006
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:18, y=SCH$Arrival_position[170:187], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:18, y=SCH$Quali_position[170:187])) +
+  geom_line(mapping = aes(x=1:18, y=SCH$Quali_position[170:187], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:18, y=SCH$Arrival_position[170:187])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2006") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("red", "yellow3"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2006
+```{r}
+SCH2006_Quali_Rel = cumsum(SCH$Quali_position[170:187]) / c(1:18)
+SCH2006_Arrival_Rel = cumsum(SCH$Arrival_position[170:187]) / c(1:18)
+ALO2006_Arrival_Rel = cumsum(OPPONENT$Arrival_position[170:187]) / c(1:18)
+SCH2006_Quali_Rel
+SCH2006_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:18, y=SCH2006_Arrival_Rel, colour="Posizione di arrivo medio SCH")) + geom_point(mapping = aes(x=1:18, y=SCH2006_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:18, y=SCH2006_Quali_Rel, colour="Posizione di qualifica media SCH")) + geom_point(mapping = aes(x=1:18, y=SCH2006_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:18, y=ALO2006_Arrival_Rel, colour="Posizione di arrivo medio ALO")) + geom_point(mapping = aes(x=1:18, y=ALO2006_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2006") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio SCH", "Posizione di qualifica media SCH", "Posizione di arrivo medio ALO"), values = c("red", "yellow3", "dodgerblue"))
+```
+L'avventura in rosso termina con un anno dove il posizionamento medio in qualifica è 4.89 e in gara è 5.17.
+
+
+
+--------------------------------------------------------------------------------
+#VETTEL
+--------------------------------------------------------------------------------
+#2009
+Nuova scuderia, nuovo talento, Sebastian Vettel approda in RedBull nel 2009 dopo aver impressionato nel 2008 con la vettura sorella della casa austriaca, l'italiana Toro Rosso.
+Vettel quell'anno è l'unico pilota in grado di impensierire almeno un minimo il pilota che si laureerà campione: l'inglese Janson Button.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2009
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=VET$Arrival_position[1:17], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:17, y=VET$Arrival_position[1:17])) +
+  geom_line(mapping = aes(x=1:17, y=VET$Quali_position[1:17], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:17, y=VET$Quali_position[1:17])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2009") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("darkblue", "purple"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2009
+```{r}
+VET2009_Quali_Rel = cumsum(VET$Quali_position[1:17]) / c(1:17)
+VET2009_Arrival_Rel = cumsum(VET$Arrival_position[1:17]) / c(1:17)
+BUT2009_Arrival_Rel = cumsum(OPPONENT$Arrival_position[188:204]) / c(1:17)
+VET2009_Quali_Rel
+VET2009_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=VET2009_Arrival_Rel, colour="Posizione di arrivo medio VET")) + geom_point(mapping = aes(x=1:17, y=VET2009_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=VET2009_Quali_Rel, colour="Posizione di qualifica media VET")) + geom_point(mapping = aes(x=1:17, y=VET2009_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=BUT2009_Arrival_Rel, colour="Posizione di arrivo medio BUT")) + geom_point(mapping = aes(x=1:17, y=BUT2009_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2009") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio VET", "Posizione di qualifica media VET", "Posizione di arrivo medio BUT"), values = c("darkblue", "purple", "springgreen"))
+```
+Il tedesco concluderà la stagione con 4 vittorie, un risultato medio in qualifica di 3.88 e uno in gara di 8.31.
+
+#2010
+Nel 2010 Sebastian Vettel diventa il più giovane campione della storia all'età record di 23 anni dopo una stagione estremamente combattuta fino all'ultimo giro dell'ultima gara in Abu Dhabi.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2010
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=VET$Arrival_position[18:36], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:19, y=VET$Arrival_position[18:36])) +
+  geom_line(mapping = aes(x=1:19, y=VET$Quali_position[18:36], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:19, y=VET$Quali_position[18:36])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2010") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("darkblue", "purple"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2010
+```{r}
+VET2010_Quali_Rel = cumsum(VET$Quali_position[18:36]) / c(1:19)
+VET2010_Arrival_Rel = cumsum(VET$Arrival_position[18:36]) / c(1:19)
+ALO2010_Arrival_Rel = cumsum(OPPONENT$Arrival_position[205:223]) / c(1:19)
+VET2010_Quali_Rel
+VET2010_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=VET2010_Arrival_Rel, colour="Posizione di arrivo medio VET")) + geom_point(mapping = aes(x=1:19, y=VET2010_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=VET2010_Quali_Rel, colour="Posizione di qualifica media VET")) + geom_point(mapping = aes(x=1:19, y=VET2010_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=ALO2010_Arrival_Rel, colour="Posizione di arrivo medio ALO")) + geom_point(mapping = aes(x=1:19, y=ALO2010_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2010") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio VET", "Posizione di qualifica media VET", "Posizione di arrivo medio ALO"), values = c("darkblue", "purple", "red"))
+```
+Il piazzamento medio in qualifica è 2.00 mentre in gara è 6.21.
+
+#2011
+Anno dominante per la Red Bull e Vettel che vonce con largo margine il titolo sullo sfidante Janson Button, il punteggio finale è di 392 a 270 per il tedesco.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2011
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=VET$Arrival_position[37:55], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:19, y=VET$Arrival_position[37:55])) +
+  geom_line(mapping = aes(x=1:19, y=VET$Quali_position[37:55], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:19, y=VET$Quali_position[37:55])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2011") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("darkblue", "purple"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2011
+```{r}
+VET2011_Quali_Rel = cumsum(VET$Quali_position[37:55]) / c(1:19)
+VET2011_Arrival_Rel = cumsum(VET$Arrival_position[37:55]) / c(1:19)
+BUT2011_Arrival_Rel = cumsum(OPPONENT$Arrival_position[224:242]) / c(1:19)
+VET2011_Quali_Rel
+VET2011_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=VET2011_Arrival_Rel, colour="Posizione di arrivo medio VET")) + geom_point(mapping = aes(x=1:19, y=VET2011_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=VET2011_Quali_Rel, colour="Posizione di qualifica media VET")) + geom_point(mapping = aes(x=1:19, y=VET2011_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=BUT2011_Arrival_Rel, colour="Posizione di arrivo medio BUT")) + geom_point(mapping = aes(x=1:19, y=BUT2011_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2011") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio VET", "Posizione di qualifica media VET", "Posizione di arrivo medio BUT"), values = c("darkblue", "purple", "black"))
+```
+Quasi sempre in pole Vettel conclude l'anno con una qualifica media di 1.26 e un posizionamento medio a fine gara di 2.52.
+
+#2012
+A dir di molti una delle migliori stagioni di F1 di sempre: 7 piloti diversi vincono le prime 7 gare dell'anno. Dopo un inizio di stagione difficile, Sebastian Vettel compie una spettacolare rimonta su Fernando Alonso in Ferrari e riesce a vincere il terzo titolo consecutivo in Brasile all'ultimo appuntamento della stagione staccando lo spagnolo di soli 3 punti.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2012
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:20, y=VET$Arrival_position[56:75], colour="Posizione di arrivo VET")) + geom_point(mapping = aes(x=1:20, y=VET$Arrival_position[56:75])) +
+  geom_line(mapping = aes(x=1:20, y=VET$Quali_position[56:75], colour="Posizione di qualifica VET")) + geom_point(mapping = aes(x=1:20, y=VET$Quali_position[56:75])) +
+  geom_line(mapping = aes(x=1:20, y=OPPONENT$Arrival_position[243:262], colour="Posizione di arrivo ALO")) + geom_point(mapping = aes(x=1:20, y=OPPONENT$Arrival_position[243:262])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2012") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo VET", "Posizione di qualifica VET", "Posizione di arrivo ALO"), values = c("darkblue", "purple", "red"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2012
+```{r}
+VET2012_Quali_Rel = cumsum(VET$Quali_position[56:75]) / c(1:20)
+VET2012_Arrival_Rel = cumsum(VET$Arrival_position[56:75]) / c(1:20)
+ALO2012_Arrival_Rel = cumsum(OPPONENT$Arrival_position[243:262]) / c(1:20)
+VET2012_Quali_Rel
+VET2012_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:20, y=VET2012_Arrival_Rel, colour="Posizione di arrivo medio VET")) + geom_point(mapping = aes(x=1:20, y=VET2012_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:20, y=VET2012_Quali_Rel, colour="Posizione di qualifica media VET")) + geom_point(mapping = aes(x=1:20, y=VET2012_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:20, y=ALO2012_Arrival_Rel, colour="Posizione di arrivo medio ALO")) + geom_point(mapping = aes(x=1:20, y=ALO2012_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2012") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio VET", "Posizione di qualifica media VET", "Posizione di arrivo medio ALO"), values = c("darkblue", "purple", "red"))
+```
+La stagione si conclude con una qualifica media di 4.2 e un piazzamento medio in gara di 5.1.
+
+#-------------------------------------------------------------------------------
+#VETTEL E HAMILTON (perché hanno corso nelle rispettive scuderue nello stesso anno)
+#-------------------------------------------------------------------------------
+#2013
+La stagione più dominante per Vettel. Quell'anno viene anche stabilito un record destinato a dorare 10 anni fino al 2023. Il record è il numero maggiore di vittorie consecutive; Vettel in quel periodo riesce ad infilarne 9 e, come detto poco fa, il record verrà infranto nel 2023 dall'olandese Max Verstappen che alza l'asticella con 10 vittorie consecutive.
+Il 2013 è anche il primo anno di Hamilton in Mercedes; l'inglese si prende infatti un rischio lasciando una scuderia come McLaren che fino a quel momento è sempre stata una garanzia e uno dei due nomi più grandi nella storia della F1.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2013
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=VET$Arrival_position[76:94], colour="Posizione di arrivo VET")) + geom_point(mapping = aes(x=1:19, y=VET$Arrival_position[76:94])) +
+  geom_line(mapping = aes(x=1:19, y=VET$Quali_position[76:94], colour="Posizione di qualifica VET")) + geom_point(mapping = aes(x=1:19, y=VET$Quali_position[76:94])) +
+  geom_line(mapping = aes(x=1:19, y=HAM$Arrival_position[1:19], colour="Posizione di arrivo HAM")) + geom_point(mapping = aes(x=1:19, y=HAM$Arrival_position[1:19])) +
+  geom_line(mapping = aes(x=1:19, y=HAM$Quali_position[1:19], colour="Posizione di qualifica HAM")) + geom_point(mapping = aes(x=1:19, y=HAM$Quali_position[1:19])) +  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2013") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo VET", "Posizione di qualifica VET", "Posizione di arrivo HAM", "Posizione di qualifica HAM"), values = c("darkblue", "purple", "cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2013
+```{r}
+VET2013_Quali_Rel = cumsum(VET$Quali_position[76:94]) / c(1:19)
+VET2013_Arrival_Rel = cumsum(VET$Arrival_position[76:94]) / c(1:19)
+HAM2013_Arrival_Rel = cumsum(OPPONENT$Arrival_position[263:281]) / c(1:19)
+HAM2013_Quali_Rel = cumsum(HAM$Quali_position[1:19]) / c(1:19)
+VET2013_Quali_Rel
+VET2013_Arrival_Rel
+HAM2013_Quali_Rel
+HAM2013_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=VET2013_Arrival_Rel, colour="Posizione di arrivo medio VET")) + geom_point(mapping = aes(x=1:19, y=VET2013_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=VET2013_Quali_Rel, colour="Posizione di qualifica media VET")) + geom_point(mapping = aes(x=1:19, y=VET2013_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=HAM2013_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:19, y=HAM2013_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=HAM2013_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:19, y=HAM2013_Quali_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2013") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio VET", "Posizione di qualifica media VET", "Posizione di arrivo medio HAM", "Posizione di qualifica media HAM"), values = c("darkblue", "purple", "cyan1", "black"))
+```
+Una qualifica media di 2.00 e una posizione media in gara di 2.58 segnano l'ultimo mondiale di Vettel in Red Bull e nella sua carriera.
+Per qunto riguarda Hamilton la sua avventura in Mercedes comincia con una qualifica media di 6.05 e una posizionoe media in gara di 5.95.
+
+#2014
+Con il passaggio dai motori V8 ai motori V6 turbo cambiano anche le gerarchie piloti e soprattutto fra le scuderie. Questa è l'ultima stagione di Vettel in Red Bull e non sarà delle migliori perché un Lewis Hamilton al secondo anno in Mercedes vincerà il titolo combattendo solo con il compagno di scuderia Nico Rosberg.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2014
+```{r message=FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=VET$Arrival_position[95:113], colour="Posizione di arrivo VET")) + geom_point(mapping = aes(x=1:19, y=VET$Arrival_position[95:113])) +
+  geom_line(mapping = aes(x=1:19, y=VET$Quali_position[95:113], colour="Posizione di qualifica VET")) + geom_point(mapping = aes(x=1:19, y=VET$Quali_position[95:113])) +
+  geom_line(mapping = aes(x=1:19, y=HAM$Arrival_position[20:38], colour="Posizione di arrivo HAM")) + geom_point(mapping = aes(x=1:19, y=HAM$Arrival_position[20:38])) +
+  geom_line(mapping = aes(x=1:19, y=HAM$Quali_position[20:38], colour="Posizione di qualifica HAM")) + geom_point(mapping = aes(x=1:19, y=HAM$Quali_position[20:38])) +  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2014") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo VET", "Posizione di qualifica VET", "Posizione di arrivo HAM", "Posizione di qualifica HAM"), values = c("darkblue", "purple", "cyan1", "black"))
+
+
+#NOTE: vettel, insieme al compagno di scuderia furono squalificati dalla griglia di partenza (vettel, senza il problema si sarebbe qualificato sesto)
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2014
+```{r}
+VET2014_Quali_Rel = cumsum(VET$Quali_position[95:113]) / c(1:19)
+VET2014_Arrival_Rel = cumsum(VET$Arrival_position[95:113]) / c(1:19)
+HAM2014_Arrival_Rel = cumsum(HAM$Arrival_position[20:38]) / c(1:19)
+HAM2014_Quali_Rel = cumsum(HAM$Quali_position[20:38]) / c(1:19)
+VET2014_Quali_Rel
+VET2014_Arrival_Rel
+HAM2014_Arrival_Rel
+HAM2014_Quali_Rel
+```
+# --> grafico
+```{r message=FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=VET2014_Arrival_Rel, colour="Posizione di arrivo medio VET")) + geom_point(mapping = aes(x=1:19, y=VET2014_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=VET2014_Quali_Rel, colour="Posizione di qualifica media VET")) + geom_point(mapping = aes(x=1:19, y=VET2014_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=HAM2014_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:19, y=HAM2014_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=HAM2014_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:19, y=HAM2014_Quali_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2014") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio VET", "Posizione di qualifica media VET", "Posizione di arrivo medio HAM", "Posizione di qualifica media HAM"), values = c("darkblue", "purple", "cyan1", "black"))
+```
+Vettel termina la permanenza in Red Bull con una qualifica media di 7.06 e un piazzamento medio in gara di 7.42. Hamilton vince il secondo titolo della carriera con una qualifica media di 4.37 e un posizionamento medio in gara di 3.95.
+
+
+
+#-------------------------------------------------------------------------------
+#HAMILTON
+#-------------------------------------------------------------------------------
+
+#2015
+Stagione che sembra un copia incolla della precedente: Lewis e Rosberg sono un passo davanti agli altri e si giocano il titolo; Hamilton ne esce nuovamente vincitore e si laurea campione per la terza volta.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2015
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=HAM$Arrival_position[39:57], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:19, y=HAM$Arrival_position[39:57])) +
+  geom_line(mapping = aes(x=1:19, y=HAM$Quali_position[39:57], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:19, y=HAM$Quali_position[39:57])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2015") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2015
+```{r}
+HAM2015_Quali_Rel = cumsum(HAM$Quali_position[39:57]) / c(1:19)
+HAM2015_Arrival_Rel = cumsum(HAM$Arrival_position[39:57]) / c(1:19)
+ROS2015_Arrival_Rel = cumsum(OPPONENT$Arrival_position[301:319]) / c(1:19)
+HAM2015_Quali_Rel
+HAM2015_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:19, y=HAM2015_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:19, y=HAM2015_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=HAM2015_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:19, y=HAM2015_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:19, y=ROS2015_Arrival_Rel, colour="Posizione di arrivo medio ROS")) + geom_point(mapping = aes(x=1:19, y=ROS2015_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2015") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio HAM", "Posizione di qualifica media HAM", "Posizione di arrivo medio ROS"), values = c("cyan1", "black", "darkgrey"))
+```
+Meglio rispetto all'anno prima per Lewis: piazzamento medio in qualifica di 1.58 e in gara di 2.68.
+
+#2016
+Come per Ferrari nel 2002 e nel 2004, una delle stagioni più dominanti della F1. La Mercedes le vince tutte tranne 2. Questa volta però il titolo sfugge dalle mani di Hamilton e finisce in quelle del compagno di squadra Rosberg. Iconico, in quella stagione, lo schianto dei due piloti in Spagna che porterà ad un doppio DNF.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2016
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:21, y=HAM$Arrival_position[58:78], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:21, y=HAM$Arrival_position[58:78])) +
+  geom_line(mapping = aes(x=1:21, y=HAM$Quali_position[58:78], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:21, y=HAM$Quali_position[58:78])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2016") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2016
+```{r}
+HAM2016_Quali_Rel = cumsum(HAM$Quali_position[58:78]) / c(1:21)
+HAM2016_Arrival_Rel = cumsum(HAM$Arrival_position[58:78]) / c(1:21)
+ROS2016_Arrival_Rel = cumsum(OPPONENT$Arrival_position[320:340]) / c(1:21)
+HAM2016_Quali_Rel
+HAM2016_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:21, y=HAM2016_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:21, y=HAM2016_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:21, y=HAM2016_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:21, y=HAM2016_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:21, y=ROS2016_Arrival_Rel, colour="Posizione di arrivo medio ROS")) + geom_point(mapping = aes(x=1:21, y=ROS2016_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2016") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio HAM", "Posizione di qualifica media HAM", "Posizione di arrivo medio ROS"), values = c("cyan1", "black", "darkgrey"))
+```
+A fine stagione il piazzamento medio in qualifica è di 4.14 mentre quello in gara è di 3.81.
+
+#2017
+Come Senna: nel 2017 Hamilton riesce a egugliare il numero di vittorie del suo idolo d'infanzia, Ayrton Senna. Per quanto riguarda il mondiale, Hamilton si scontrerà con Sebastian Vettel ora su Ferrari; dopo un un izio difficile Hamilton recupera il gap con Sebastian e vince il quarto mondiale, il terzo con il motorista tedesco.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2017
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:20, y=HAM$Arrival_position[79:98], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:20, y=HAM$Arrival_position[79:98])) +
+  geom_line(mapping = aes(x=1:20, y=HAM$Quali_position[79:98], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:20, y=HAM$Quali_position[79:98])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2017") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2017
+```{r}
+HAM2017_Quali_Rel = cumsum(HAM$Quali_position[79:98]) / c(1:20)
+HAM2017_Arrival_Rel = cumsum(HAM$Arrival_position[79:98]) / c(1:20)
+VET2017_Arrival_Rel = cumsum(OPPONENT$Arrival_position[341:360]) / c(1:20)
+HAM2017_Quali_Rel
+HAM2017_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:20, y=HAM2017_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:20, y=HAM2017_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:20, y=HAM2017_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:20, y=HAM2017_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:20, y=VET2017_Arrival_Rel, colour="Posizione di arrivo medio VET")) + geom_point(mapping = aes(x=1:20, y=VET2017_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2017") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio HAM", "Posizione di qualifica media HAM", "Posizione di arrivo medio VET"), values = c("cyan1", "black", "red"))
+```
+La qualifica media di fine anno è 3.4 e il piazzamento medio in gara è 2.7.
+
+#2018
+Five or nothing: Hamilton e Vettel, entrambi 4 volte campioni del mondo, si sfidano per conquistare il quinto titolo; Vettel comincia forte l'anno ma ciò non basta e Hamilton batte Sebastian diventando champion il cinque volte campione.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2018
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:21, y=HAM$Arrival_position[99:119], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:21, y=HAM$Arrival_position[99:119])) +
+  geom_line(mapping = aes(x=1:21, y=HAM$Quali_position[99:119], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:21, y=HAM$Quali_position[99:119])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2018") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2018
+```{r}
+HAM2018_Quali_Rel = cumsum(HAM$Quali_position[99:119]) / c(1:21)
+HAM2018_Arrival_Rel = cumsum(HAM$Arrival_position[99:119]) / c(1:21)
+VET2018_Arrival_Rel = cumsum(OPPONENT$Arrival_position[361:381]) / c(1:21)
+HAM2018_Quali_Rel
+HAM2018_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:21, y=HAM2018_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:21, y=HAM2018_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:21, y=HAM2018_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:21, y=HAM2018_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:21, y=VET2018_Arrival_Rel, colour="Posizione di arrivo medio VET")) + geom_point(mapping = aes(x=1:21, y=VET2018_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2018") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio HAM", "Posizione di qualifica media HAM", "Posizione di arrivo medio VET"), values = c("cyan1", "black", "red"))
+```
+La qualifica media è di 2.48 mentre la posiziome media in gara è di 2.81.
+
+#2019
+Quest'anno non c'è più una ferrari a combattere con Hamilton, la lotta al titolo torna interna in casa ma Bottas non si dimostra all'altezza di Hamilton che fa capire, ancora una volta, chi è il primo pilota in Mercedes.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2019
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:21, y=HAM$Arrival_position[120:140], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:21, y=HAM$Arrival_position[120:140])) +
+  geom_line(mapping = aes(x=1:21, y=HAM$Quali_position[120:140], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:21, y=HAM$Quali_position[120:140])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2019") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2019
+```{r}
+HAM2019_Quali_Rel = cumsum(HAM$Quali_position[120:140]) / c(1:21)
+HAM2019_Arrival_Rel = cumsum(HAM$Arrival_position[120:140]) / c(1:21)
+BOT2019_Arrival_Rel = cumsum(OPPONENT$Arrival_position[382:402]) / c(1:21)
+HAM2019_Quali_Rel
+HAM2019_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:21, y=HAM2019_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:21, y=HAM2019_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:21, y=HAM2019_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:21, y=HAM2019_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:21, y=BOT2019_Arrival_Rel, colour="Posizione di arrivo medio BOT")) + geom_point(mapping = aes(x=1:21, y=BOT2019_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2019") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio HAM", "Posizione di qualifica media HAM", "Posizione di arrivo medio BOT"), values = c("cyan1", "black", "darkgrey"))
+```
+Stagione solidissima per Lewis che sonclude con un piazzamento in qualifica di 2.24 e uno in gara di 2.38
+
+#2020
+La stagione 2020 vede Hamilton dominare e eguqgliare il record di 7 titoli mondiali di Schumacher.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2020
+```{r message = FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=HAM$Arrival_position[141:157], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:17, y=HAM$Arrival_position[141:157])) +
+  geom_line(mapping = aes(x=1:17, y=HAM$Quali_position[141:157], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:17, y=HAM$Quali_position[141:157])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2020") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2020
+```{r}
+HAM2020_Quali_Rel = c( cumsum(HAM$Quali_position[141:155]) / c(1:15), NA, ((1.6*15)+3)/16 )
+HAM2020_Arrival_Rel = c( cumsum(HAM$Arrival_position[141:155]) / c(1:15), NA, ((1.8*15)+3)/16 )
+BOT2020_Arrival_Rel = cumsum(OPPONENT$Arrival_position[403:419]) / c(1:17)
+HAM2020_Quali_Rel
+HAM2020_Arrival_Rel
+```
+# --> grafico
+```{r message=FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:17, y=HAM2020_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:17, y=HAM2020_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=HAM2020_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:17, y=HAM2020_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:17, y=BOT2020_Arrival_Rel, colour="Posizione di arrivo medio BOT")) + geom_point(mapping = aes(x=1:17, y=BOT2020_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2020") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio HAM", "Posizione di qualifica media HAM", "Posizione di arrivo medio BOT"), values = c("cyan1", "black", "darkgrey"))
+```
+L'ultima stagione in cui Hamilton vincerà un titolo si conclude con una qualifica media di 1.69 e un piazzamento medio in gara di 1.88.
+
+#2021
+Ultimo anno prima del cambio di regolamento che dal 2022 introdurrà nuovamente le vetture ad effetto suolo. Hamilton si giocherà per l'ultima volta (fino a questo momento) un mondiale con la Mercedes. Ad Abu Dhabi, ultimo appuntamento della stagione, a seguito di uno dei più grandi scandali dello sport degli ultimi 15 anni, Hamilton perderà il mondiale all'ultimo giro.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2021
+```{r message=FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:22, y=HAM$Arrival_position[158:179], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:22, y=HAM$Arrival_position[158:179])) +
+  geom_line(mapping = aes(x=1:22, y=HAM$Quali_position[158:179], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:22, y=HAM$Quali_position[158:179])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2021") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2021
+```{r}
+HAM2021_Quali_Rel = c( cumsum(HAM$Quali_position[158:175]) / c(1:18), NA, c( (42+cumsum(HAM$Quali_position[177:179]))/c(20:22) ) )
+HAM2021_Arrival_Rel = cumsum(HAM$Arrival_position[158:179]) / c(1:22)
+VER2021_Arrival_Rel = cumsum(OPPONENT$Arrival_position[420:441]) / c(1:22)
+HAM2021_Quali_Rel
+HAM2021_Arrival_Rel
+```
+# --> grafico
+```{r message=FALSE}
+ggplot() +
+  geom_line(mapping = aes(x=1:22, y=HAM2021_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:22, y=HAM2021_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:22, y=HAM2021_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:22, y=HAM2021_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:22, y=VER2021_Arrival_Rel, colour="Posizione di arrivo medio VER")) + geom_point(mapping = aes(x=1:22, y=VER2021_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2021") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio HAM", "Posizione di qualifica media HAM", "Posizione di arrivo medio VER"), values = c("cyan1", "black", "darkblue"))
+
+#NOTE: hamilton è stato squalificato dalle qualifiche del gran premio del breasile per un'irregolarità all'ala posteriore, altrimenti si sarebbe qualificato primo
+```
+L'ultima stagione all'inseguimento del titolo si conclude con una qualifica media di 2.10 e un posizionamento in gara medio di 3.55.
+
+#2022
+Cambio di regolamento: si mantengono i motori V6 turbo ma l'aereodinamica passa da essere superiore, beneficiando molto dell'effetto coanda, ad essere inferiore, facendo leva sull'effetto Venturi.
+La stagione non parte bene ma, con l'aiuto della direttiva tecnica TD39, la Mercedes e Hamilton ritrovano performance andando ad attaccare la Ferrari per il secondo posto in classifica costruttori nella seconda parte di stagione. Per la prima volta dal 2016, Lewis arriverà dietro al compagno di scuderia chiudento la stagione in sesta posizione nel mondiale; questa è anche la prima stagione, da quando corre in F1, in cui Hamilton non vincerà nemmeno una gara.
+#posizionamenti in qualifica vs posidionamenti a fine gara assoluti 2022
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:22, y=HAM$Arrival_position[180:201], colour="Posizione di arrivo")) + geom_point(mapping = aes(x=1:22, y=HAM$Arrival_position[180:201])) +
+  geom_line(mapping = aes(x=1:22, y=HAM$Quali_position[180:201], colour="Posizione di qualifica")) + geom_point(mapping = aes(x=1:22, y=HAM$Quali_position[180:201])) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO ASS. 2022") +
+  scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) +
+  scale_color_manual("", breaks = c("Posizione di arrivo", "Posizione di qualifica"), values = c("cyan1", "black"))
+```
+#posizionamenti in qualifica vs posidionamenti a fine gara relativi 2022
+```{r}
+HAM2022_Quali_Rel = cumsum(HAM$Quali_position[180:201]) / c(1:22)
+HAM2022_Arrival_Rel = cumsum(HAM$Arrival_position[180:201]) / c(1:22)
+VER2022_Arrival_Rel = cumsum(OPPONENT$Arrival_position[442:463]) / c(1:22)
+HAM2022_Quali_Rel
+HAM2022_Arrival_Rel
+```
+# --> grafico
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x=1:22, y=HAM2022_Arrival_Rel, colour="Posizione di arrivo medio HAM")) + geom_point(mapping = aes(x=1:22, y=HAM2022_Arrival_Rel)) +
+  geom_line(mapping = aes(x=1:22, y=HAM2022_Quali_Rel, colour="Posizione di qualifica media HAM")) + geom_point(mapping = aes(x=1:22, y=HAM2022_Quali_Rel)) +
+  geom_line(mapping = aes(x=1:22, y=VER2022_Arrival_Rel, colour="Posizione di arrivo medio VER")) + geom_point(mapping = aes(x=1:22, y=VER2022_Arrival_Rel)) +
+  ylab("POSIZIONE") +
+  xlab("GARA") +
+  ggtitle("QUALIFICA-ARRIVO REL. 2022") +
+  scale_y_reverse() +
+  scale_color_manual("", breaks = c("Posizione di arrivo medio HAM", "Posizione di qualifica media HAM", "Posizione di arrivo medio VER"), values = c("cyan1", "black", "darkblue"))
+```
+Il posizionamento medio in qualifica è di 6.4 mentre quello in gara è 6.14.
+
+
+
+
+
+#-------------------------------------------------------------------------------
+#CONFRONTO SCH, VET, HAM SU POSIZIONE QUALIFICA E POSIZIONE DI ARRIVO FINE GARA
+#-------------------------------------------------------------------------------
+```{r message=FALSE}
+QualiEGara <- SCH_VET_HAM %>%
+  pivot_longer(cols = c(Quali_position, Arrival_position), names_to = "Qualifica_e_Gara", values_to = "Posizione")
+
+ggplot(QualiEGara, aes(x=Name, y=Posizione, fill=Qualifica_e_Gara)) + geom_boxplot() + scale_y_reverse(breaks=c(1, 5, 10, 15, 20, 22)) + xlab("") + ggtitle("Gara o Qualifica?")
+```
+Dal grafico notiamo che in qualifica Vettel è mediamente più forte sia di Schumacher sia di Hamilton, mentre in gara notiamo che il piazzamento medio è migliore in Hamilton, poi in Vette e infine in Schumacher. Può essere questo dovuto al fatto che l'affidabilità delle vetture va via via aumentando. Andiamo quindi a vedere il numero di DNF.
+#-------------------------------------------------------------------------------
+#CHIA HA PIU' DNF?
+#-------------------------------------------------------------------------------
+```{r}
+DNF_SCH = sum(SCH_Arrival_omitNA[SCH_Arrival_omitNA == DNF] / 20)
+DNF_SCH
+DNF_VET = sum(VET_Arrival_omitNA[VET_Arrival_omitNA == DNF] / 20)
+DNF_VET
+DNF_HAM = sum(HAM_Arrival_omitNA[HAM_Arrival_omitNA == DNF] / 20)
+DNF_HAM
+```
+Il pilota con più DNF è Schumacher, segue Vettel e infine Hamilton. Oltre agli incidenti fatti dal pilota, non si può escludere il fatto che l'affidabilità è migliorata nel tempo.
+
+#-------------------------------------------------------------------------------
+#CONFRONTO SCH, VET, HAM SU NUMERO DI POLE A CONFRONTO (CARRIERA)
+#-------------------------------------------------------------------------------
+#Percentuali pole SCH, VET, HAM
+#numero di pole di SCHUMACHER in FERRARI
+```{r message=FALSE}
+SCH_Quali_omitNA = na.omit(SCH$Quali_position)
+pole_ass_SCH = sum(SCH_Quali_omitNA[SCH_Quali_omitNA == 1])
+pole_rel_SCH = pole_ass_SCH / 181
+pole_position_96_06 = c("Schumacher", "Others")
+ggplot(, aes(x="", y=c(pole_ass_SCH, 181-pole_ass_SCH), fill=pole_position_96_06)) +
+  ggtitle("pole position SCHUMACHER vs OTHERS 96-06") +
+  xlab("") +
+  ylab("") +
+  geom_bar(stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = c(round(pole_ass_SCH/1.81, 2), round((181-pole_ass_SCH)/1.81, 2))), position = position_stack(vjust = 0.5)) + 
+  scale_fill_manual(values = c("grey", "red"))
+```
+#numero di pole di VETTEL in REDBULL
+```{r message=FALSE}
+VET_Quali_omitNA = na.omit(VET$Quali_position)
+pole_ass_VET = sum(VET_Quali_omitNA[VET_Quali_omitNA == 1])
+pole_rel_VET = pole_ass_VET / 113
+pole_09_14 = c("Vettel", "Others")
+ggplot(, aes(x="", y=c(pole_ass_VET, 113-pole_ass_VET), fill=pole_09_14)) +
+  ggtitle("pole position VETTEL vs OTHERS 09-14") +
+  xlab("") +
+  ylab("") +
+  geom_bar(stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = c(round(pole_ass_VET/1.13, 2), round((113-pole_ass_VET)/1.13, 2))), position = position_stack(vjust = 0.5), color = "white") + 
+  scale_fill_manual(values = c("grey", "darkblue"))
+```
+#numero di pole di HAMILTON in MERCEDES
+```{r message=FALSE}
+HAM_Quali_omitNA = na.omit(HAM$Quali_position)
+pole_ass_HAM = sum(HAM_Quali_omitNA[HAM_Quali_omitNA == 1])
+pole_rel_HAM = pole_ass_HAM / 200
+pole_13_22 = c("Hamilton", "Others")
+ggplot(, aes(x="", y=c(pole_ass_HAM, 200-pole_ass_HAM), fill=pole_13_22)) +
+  ggtitle("pole position HAMILTON vs OTHERS 13-22") +
+  xlab("") +
+  ylab("") +
+  geom_bar(stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = c(round(pole_ass_HAM/2, 2), round((200-pole_ass_HAM)/2, 2))), position = position_stack(vjust = 0.5)) + 
+  scale_fill_manual(values = c("cyan1", "grey"))
+```
+Negli anni della RedBull Vettel prende il 38.94% delle pole (il migliore dei tre piloti considerati inquesto studio), segue Hamilton con il 37% negli anni con la Mercedes e Schumacher che farà pole con la rossa il 32.04% delle volte.
+
+#-------------------------------------------------------------------------------
+#CONFRONTO SCH, VET, HAM SU NUMERO DI VITTORIE A CONFRONTO (CARRIERA)
+#-------------------------------------------------------------------------------
+#Percentuali vittorie SCH, VET, HAM
+#numero di vittorie di SCHUMACHER in FERRARI
+```{r message=FALSE}
+SCH_Arrival_omitNA = na.omit(SCH$Arrival_position)
+vittorie_ass_SCH = sum(SCH_Arrival_omitNA[SCH_Arrival_omitNA == 1])
+vittorie_rel_SCH = vittorie_ass_SCH / 181
+vittorie_96_06 = c("Schumacher", "Others")
+ggplot(, aes(x="", y=c(vittorie_ass_SCH, 181-vittorie_ass_SCH), fill=vittorie_96_06)) +
+  ggtitle("Vittorie SCHUMACHER vs OTHERS 96-06") +
+  xlab("") +
+  ylab("") +
+  geom_bar(stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = c(round(vittorie_ass_SCH/1.81, 2), round((181-vittorie_ass_SCH)/1.81, 2))), position = position_stack(vjust = 0.5)) + 
+  scale_fill_manual(values = c("grey", "red"))
+```
+#numero di vittorie di VETTEL in REDBULL
+```{r message=FALSE}
+VET_Arrival_omitNA = na.omit(VET$Arrival_position)
+vittorie_ass_VET = sum(VET_Arrival_omitNA[VET_Arrival_omitNA == 1])
+vittorie_rel_VET = vittorie_ass_VET / 113
+vittorie_09_14 = c("Vettel", "Others")
+ggplot(, aes(x="", y=c(vittorie_ass_VET, 113-vittorie_ass_VET), fill=vittorie_09_14)) +
+  ggtitle("Vittorie VETTEL vs OTHERS 09-14") +
+  xlab("") +
+  ylab("") +
+  geom_bar(stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = c(round(vittorie_ass_VET/1.13, 2), round((113-vittorie_ass_VET)/1.13, 2))), position = position_stack(vjust = 0.5), colour = "white") + 
+  scale_fill_manual(values = c("grey", "darkblue"))
+```
+#numero di vittorie di HAMILTON in MERCEDES
+```{r message=FALSE}
+HAM_Arrival_omitNA = na.omit(HAM$Arrival_position)
+vittorie_ass_HAM = sum(HAM_Arrival_omitNA[HAM_Arrival_omitNA == 1])
+vittorie_rel_HAM = vittorie_ass_HAM / 200
+vittorie_13_22 = c("Hamilton", "Others")
+ggplot(, aes(x="", y=c(vittorie_ass_HAM, 200-vittorie_ass_HAM), fill=vittorie_13_22)) +
+  ggtitle("Vittorie HAMILTON vs OTHERS 013-22") +
+  xlab("") +
+  ylab("") +
+  geom_bar(stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = c(vittorie_ass_HAM*0.5, (200-vittorie_ass_HAM)*0.5)), position = position_stack(vjust = 0.5)) + 
+  scale_fill_manual(values = c("cyan1", "grey"))
+```
+Con le frecce d’argento Hamilton si dimostra il pilota più vincente dei tre con un win rate del 41%, segue il Kaiser con il 39.78% e conclude Vettel al 33.63%.
+
+#dataset + grafico che mostrano i circuiti (alcuni dei più iconici dove i tre piloti in esame hanno corso) in cui si vedono i colori in base a chi ha vinto di più con quella scuderia
+```{r}
+df <- data.frame(lng = c(136.5363, 144.9703982, 7.4229436, -46.6992487, -1.0172767, 2.2598275, 5.9633321, -73.5281633, 19.2471644, 9.2813387),
+                 lat = c(34.84559, -37.8517022, 43.737318, -23.7046328, 52.0786516, 41.5703118, 50.4462706, 45.5016582, 47.5799044, 45.6173716),
+                 size = c(25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000),
+                 popup = c("Suzuka", "Melbourne", "Monaco", "Sao Paulo", "Silverstone", "Barcelona", "Spa-Francorchamps", "Montréal", "Hungaroring", "Monza"),
+                 type = c("Suzuka", "Melbourne", "Monaco", "Sao Paulo", "Silverstone", "Barcelona", "Spa-Francorchamps", "Montréal", "Hungaroring", "Monza"))
+
+pal <- colorFactor(
+  palette = c('cyan3', 'cyan3', 'red', 'red', 'purple', 'red', 'cyan3', 'cyan3', 'red', 'red'),
+            #Spagna, Ungheria, Australia, Monaco, Canada, Monza, Brasile, Inghilterra, Spa, Suzuka
+  domain = df$type
+)
+
+leaflet(df) %>%
+  addTiles() %>%
+  addCircles(lng = ~lng, lat = ~lat, weight = 3, radius = ~size, popup = ~popup, color = ~pal(type), opacity = 1, fillOpacity = 0.5) %>%
+  addMarkers(lng = ~lng, lat = ~lat, popup = ~popup)
+```
+Il grafico ci mostra che in generale i piloti che hanno vinto maggiormente su questi circuiti sono Schumacher (5) e Hamilton (4), in Canada i due hanno lo stesso numero di vittorie.
+
+#-------------------------------------------------------------------------------
+#V6, V8 e V10 a confronto
+#-------------------------------------------------------------------------------
+#Micro dataset che permettono una maggiore facilità di analisi dei dati
+```{r}
+anni <- c(1996:2006, 2009:2022)
+```
+```{r}
+Italia <- filter(championship, Grand_prix == "Italia")
+```
+```{r}
+Giappone <- filter(championship, Grand_prix == "Giappone")
+```
+```{r}
+Belgio <- filter(championship, Grand_prix == "Belgio")
+```
+```{r}
+Canada <- filter(championship, Grand_prix == "Canada")
+```
+```{r}
+Australia <- filter(championship, Grand_prix == "Australia")
+```
+```{r}
+Monaco <- filter(championship, Grand_prix == "Monaco")
+```
+```{r}
+Brasile <- filter(championship, Grand_prix == "Brasile")
+```
+```{r}
+Spagna <- filter(championship, Grand_prix == "Spagna")
+```
+```{r}
+Gran_Bretagna <- filter(championship, Grand_prix == "Gran Bretagna")
+```
+```{r}
+Ungheria <- filter(championship, Grand_prix == "Ungheria")
+```
+
+
+#ITALIA
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+ItaliaQualitmp = c()
+
+for(x in 1:50)
+{
+  tmp = str_sub(Italia$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  ItaliaQualitmp[x] = tmp2
+}
+
+ItaliaQualiOdd = ItaliaQualitmp[seq(1, length(ItaliaQualitmp), by = 2)]
+ItaliaQualiEven = ItaliaQualitmp[seq(2, length(ItaliaQualitmp), by = 2)]
+
+ItaliaQuali = c()
+
+for(x in 1:25)
+{
+  if(is.na(ItaliaQualiOdd[x]))
+  {
+    ItaliaQuali[x] = ItaliaQualiEven[x]
+  }
+  else if(is.na(ItaliaQualiEven[x]))
+  {
+    ItaliaQuali[x] = ItaliaQualiOdd[x]
+  } 
+  else if((ItaliaQualiOdd[x] > ItaliaQualiEven[x]))
+  {
+    ItaliaQuali[x] = ItaliaQualiEven[x]
+  }
+  else if((ItaliaQualiOdd[x] < ItaliaQualiEven[x]))
+  {
+    ItaliaQuali[x] = ItaliaQualiOdd[x]
+  }
+}
+
+ItaliaV10Quali = ItaliaQuali[1:10]
+ItaliaV8Quali = ItaliaQuali[11:16]
+ItaliaV6Quali = ItaliaQuali[17:25]
+
+ItaliaV10QualiMean = sum(ItaliaV10Quali) / length(ItaliaV10Quali)
+ItaliaV8QualiMean = sum(ItaliaV8Quali) / length(ItaliaV8Quali)
+ItaliaV6QualiMean = sum(ItaliaV6Quali) / length(ItaliaV6Quali)
+ItaliaV10QualiMean
+ItaliaV8QualiMean
+ItaliaV6QualiMean
+```
+```{r}
+ItaliaFLaptmp = c()
+
+for(x in 1:50)
+{
+  tmp = str_sub(Italia$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  ItaliaFLaptmp[x] = tmp2
+}
+
+ItaliaFLapOdd = ItaliaFLaptmp[seq(1, length(ItaliaFLaptmp), by = 2)]
+ItaliaFLapEven = ItaliaFLaptmp[seq(2, length(ItaliaFLaptmp), by = 2)]
+
+ItaliaFLap = c()
+
+for(x in 1:25)
+{
+  if(is.na(ItaliaFLapOdd[x]))
+  {
+    ItaliaFLap[x] = ItaliaFLapEven[x]
+  }
+  else if(is.na(ItaliaFLapEven[x]))
+  {
+    ItaliaFLap[x] = ItaliaFLapOdd[x]
+  } 
+  else if((ItaliaFLapOdd[x] > ItaliaFLapEven[x]))
+  {
+    ItaliaFLap[x] = ItaliaFLapEven[x]
+  }
+  else if((ItaliaFLapOdd[x] < ItaliaFLapEven[x]))
+  {
+    ItaliaFLap[x] = ItaliaFLapOdd[x]
+  }
+}
+
+ItaliaV10FLap = ItaliaFLap[1:10]
+ItaliaV8FLap = ItaliaFLap[11:16]
+ItaliaV6FLap = ItaliaFLap[17:25]
+
+ItaliaV10FLapMean = sum(ItaliaV10FLap) / length(ItaliaV10FLap)
+ItaliaV8FLapMean = sum(ItaliaV8FLap) / length(ItaliaV8FLap)
+ItaliaV6FLapMean = sum(ItaliaV6FLap) / length(ItaliaV6FLap)
+ItaliaV10FLapMean
+ItaliaV8FLapMean
+ItaliaV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2022), y = ItaliaFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2022), y = ItaliaFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2022), y = ItaliaQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2022), y = ItaliaQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  ggtitle("Tempi Monza negli anni") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("darkgreen", "red"))
+```
+
+
+
+#GIAPPPONE
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+GiapponeQualitmp = c()
+
+for(x in 1:46)
+{
+  tmp = str_sub(Giappone$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  GiapponeQualitmp[x] = tmp2
+}
+
+GiapponeQualiOdd = GiapponeQualitmp[seq(1, length(GiapponeQualitmp), by = 2)]
+GiapponeQualiEven = GiapponeQualitmp[seq(2, length(GiapponeQualitmp), by = 2)]
+
+GiapponeQuali = c()
+
+for(x in 1:23)
+{
+  if(is.na(GiapponeQualiOdd[x]))
+  {
+    GiapponeQuali[x] = GiapponeQualiEven[x]
+  }
+  else if(is.na(GiapponeQualiEven[x]))
+  {
+    GiapponeQuali[x] = GiapponeQualiOdd[x]
+  } 
+  else if((GiapponeQualiOdd[x] > GiapponeQualiEven[x]))
+  {
+    GiapponeQuali[x] = GiapponeQualiEven[x]
+  }
+  else if((GiapponeQualiOdd[x] < GiapponeQualiEven[x]))
+  {
+    GiapponeQuali[x] = GiapponeQualiOdd[x]
+  }
+}
+
+GiapponeV10Quali = GiapponeQuali[1:10]
+GiapponeV8Quali = GiapponeQuali[11:16]
+GiapponeV6Quali = GiapponeQuali[17:23]
+
+GiapponeV10QualiMean = sum(GiapponeV10Quali) / length(GiapponeV10Quali)
+GiapponeV8QualiMean = sum(GiapponeV8Quali) / length(GiapponeV8Quali)
+GiapponeV6QualiMean = sum(GiapponeV6Quali) / length(GiapponeV6Quali)
+GiapponeV10QualiMean
+GiapponeV8QualiMean
+GiapponeV6QualiMean
+```
+```{r}
+GiapponeFLaptmp = c()
+
+for(x in 1:46)
+{
+  tmp = str_sub(Giappone$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  GiapponeFLaptmp[x] = tmp2
+}
+
+GiapponeFLapOdd = GiapponeFLaptmp[seq(1, length(GiapponeFLaptmp), by = 2)]
+GiapponeFLapEven = GiapponeFLaptmp[seq(2, length(GiapponeFLaptmp), by = 2)]
+
+GiapponeFLap = c()
+
+for(x in 1:23)
+{
+  if(is.na(GiapponeFLapOdd[x]))
+  {
+    GiapponeFLap[x] = GiapponeFLapEven[x]
+  }
+  else if(is.na(GiapponeFLapEven[x]))
+  {
+    GiapponeFLap[x] = GiapponeFLapOdd[x]
+  } 
+  else if((GiapponeFLapOdd[x] > GiapponeFLapEven[x]))
+  {
+    GiapponeFLap[x] = GiapponeFLapEven[x]
+  }
+  else if((GiapponeFLapOdd[x] < GiapponeFLapEven[x]))
+  {
+    GiapponeFLap[x] = GiapponeFLapOdd[x]
+  }
+}
+
+GiapponeFLap[20] = 66.457
+
+GiapponeV10FLap = GiapponeFLap[1:10]
+GiapponeV8FLap = GiapponeFLap[11:16]
+GiapponeV6FLap = GiapponeFLap[17:23]
+
+GiapponeV10FLapMean = sum(GiapponeV10FLap) / length(GiapponeV10FLap)
+GiapponeV8FLapMean = sum(GiapponeV8FLap) / length(GiapponeV8FLap)
+GiapponeV6FLapMean = sum(GiapponeV6FLap) / length(GiapponeV6FLap)
+GiapponeV10FLapMean
+GiapponeV8FLapMean
+GiapponeV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2019, 2022), y = GiapponeFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2019, 2022), y = GiapponeFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2019, 2022), y = GiapponeQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2019, 2022), y = GiapponeQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("black", "red"))
+```
+
+
+
+#CANADA
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+CanadaQualitmp = c()
+
+for(x in 1:44)
+{
+  tmp = str_sub(Canada$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  CanadaQualitmp[x] = tmp2
+}
+
+CanadaQualiOdd = CanadaQualitmp[seq(1, length(CanadaQualitmp), by = 2)]
+CanadaQualiEven = CanadaQualitmp[seq(2, length(CanadaQualitmp), by = 2)]
+
+CanadaQuali = c()
+
+for(x in 1:22)
+{
+  if(is.na(CanadaQualiOdd[x]))
+  {
+    CanadaQuali[x] = CanadaQualiEven[x]
+  }
+  else if(is.na(CanadaQualiEven[x]))
+  {
+    CanadaQuali[x] = CanadaQualiOdd[x]
+  } 
+  else if((CanadaQualiOdd[x] > CanadaQualiEven[x]))
+  {
+    CanadaQuali[x] = CanadaQualiEven[x]
+  }
+  else if((CanadaQualiOdd[x] < CanadaQualiEven[x]))
+  {
+    CanadaQuali[x] = CanadaQualiOdd[x]
+  }
+}
+
+CanadaV10Quali = CanadaQuali[1:10]
+CanadaV8Quali = CanadaQuali[11:15]
+CanadaV6Quali = CanadaQuali[16:22]
+
+CanadaV10Quali[8] = 16.047
+
+CanadaV10QualiMean = sum(CanadaV10Quali) / length(CanadaV10Quali)
+CanadaV8QualiMean = sum(CanadaV8Quali) / length(CanadaV8Quali)
+CanadaV6QualiMean = sum(CanadaV6Quali) / length(CanadaV6Quali)
+CanadaV10QualiMean
+CanadaV8QualiMean
+CanadaV6QualiMean
+```
+```{r}
+CanadaFLaptmp = c()
+
+for(x in 1:44)
+{
+  tmp = str_sub(Canada$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  CanadaFLaptmp[x] = tmp2
+}
+
+CanadaFLapOdd = CanadaFLaptmp[seq(1, length(CanadaFLaptmp), by = 2)]
+CanadaFLapEven = CanadaFLaptmp[seq(2, length(CanadaFLaptmp), by = 2)]
+
+CanadaFLap = c()
+
+for(x in 1:22)
+{
+  if(is.na(CanadaFLapOdd[x]))
+  {
+    CanadaFLap[x] = CanadaFLapEven[x]
+  }
+  else if(is.na(CanadaFLapEven[x]))
+  {
+    CanadaFLap[x] = CanadaFLapOdd[x]
+  } 
+  else if((CanadaFLapOdd[x] > CanadaFLapEven[x]))
+  {
+    CanadaFLap[x] = CanadaFLapEven[x]
+  }
+  else if((CanadaFLapOdd[x] < CanadaFLapEven[x]))
+  {
+    CanadaFLap[x] = CanadaFLapOdd[x]
+  }
+}
+
+CanadaV10FLap = CanadaFLap[1:10]
+CanadaV8FLap = CanadaFLap[11:15]
+CanadaV6FLap = CanadaFLap[16:22]
+
+CanadaV10FLapMean = sum(CanadaV10FLap) / length(CanadaV10FLap)
+CanadaV8FLapMean = sum(CanadaV8FLap) / length(CanadaV8FLap)
+CanadaV6FLapMean = sum(CanadaV6FLap) / length(CanadaV6FLap)
+CanadaV10FLapMean
+CanadaV8FLapMean
+CanadaV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2010:2019, 2022), y = CanadaFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2010:2019, 2022), y = CanadaFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2010:2019, 2022), y = CanadaQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2010:2019, 2022), y = CanadaQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("black", "red"))
+```
+
+
+
+#UNGHERIA
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+UngheriaQualitmp = c()
+
+for(x in 1:50)
+{
+  tmp = str_sub(Ungheria$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  UngheriaQualitmp[x] = tmp2
+}
+
+UngheriaQualiOdd = UngheriaQualitmp[seq(1, length(UngheriaQualitmp), by = 2)]
+UngheriaQualiEven = UngheriaQualitmp[seq(2, length(UngheriaQualitmp), by = 2)]
+
+UngheriaQuali = c()
+
+for(x in 1:25)
+{
+  if(is.na(UngheriaQualiOdd[x]))
+  {
+    UngheriaQuali[x] = UngheriaQualiEven[x]
+  }
+  else if(is.na(UngheriaQualiEven[x]))
+  {
+    UngheriaQuali[x] = UngheriaQualiOdd[x]
+  } 
+  else if((UngheriaQualiOdd[x] > UngheriaQualiEven[x]))
+  {
+    UngheriaQuali[x] = UngheriaQualiEven[x]
+  }
+  else if((UngheriaQualiOdd[x] < UngheriaQualiEven[x]))
+  {
+    UngheriaQuali[x] = UngheriaQualiOdd[x]
+  }
+}
+
+UngheriaV10Quali = UngheriaQuali[1:10]
+UngheriaV8Quali = UngheriaQuali[11:16]
+UngheriaV6Quali = UngheriaQuali[17:25]
+
+UngheriaV10QualiMean = sum(UngheriaV10Quali) / length(UngheriaV10Quali)
+UngheriaV8QualiMean = sum(UngheriaV8Quali) / length(UngheriaV8Quali)
+UngheriaV6QualiMean = sum(UngheriaV6Quali) / length(UngheriaV6Quali)
+UngheriaV10QualiMean
+UngheriaV8QualiMean
+UngheriaV6QualiMean
+```
+```{r}
+UngheriaFLaptmp = c()
+
+for(x in 1:50)
+{
+  tmp = str_sub(Ungheria$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  UngheriaFLaptmp[x] = tmp2
+}
+
+UngheriaFLapOdd = UngheriaFLaptmp[seq(1, length(UngheriaFLaptmp), by = 2)]
+UngheriaFLapEven = UngheriaFLaptmp[seq(2, length(UngheriaFLaptmp), by = 2)]
+
+UngheriaFLap = c()
+
+for(x in 1:25)
+{
+  if(is.na(UngheriaFLapOdd[x]))
+  {
+    UngheriaFLap[x] = UngheriaFLapEven[x]
+  }
+  else if(is.na(UngheriaFLapEven[x]))
+  {
+    UngheriaFLap[x] = UngheriaFLapOdd[x]
+  } 
+  else if((UngheriaFLapOdd[x] > UngheriaFLapEven[x]))
+  {
+    UngheriaFLap[x] = UngheriaFLapEven[x]
+  }
+  else if((UngheriaFLapOdd[x] < UngheriaFLapEven[x]))
+  {
+    UngheriaFLap[x] = UngheriaFLapOdd[x]
+  }
+}
+
+UngheriaV10FLap = UngheriaFLap[1:10]
+UngheriaV8FLap = UngheriaFLap[11:16]
+UngheriaV6FLap = UngheriaFLap[17:25]
+
+UngheriaV10FLapMean = sum(UngheriaV10FLap) / length(UngheriaV10FLap)
+UngheriaV8FLapMean = sum(UngheriaV8FLap) / length(UngheriaV8FLap)
+UngheriaV6FLapMean = sum(UngheriaV6FLap) / length(UngheriaV6FLap)
+UngheriaV10FLapMean
+UngheriaV8FLapMean
+UngheriaV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2022), y = UngheriaFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2022), y = UngheriaFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2022), y = UngheriaQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2022), y = UngheriaQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("darkgreen", "red"))
+```
+
+
+
+#GRAN_BRETAGNA
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+Gran_BretagnaQualitmp = c()
+
+for(x in 1:50)
+{
+  tmp = str_sub(Gran_Bretagna$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  Gran_BretagnaQualitmp[x] = tmp2
+}
+
+Gran_BretagnaQualiOdd = Gran_BretagnaQualitmp[seq(1, length(Gran_BretagnaQualitmp), by = 2)]
+Gran_BretagnaQualiEven = Gran_BretagnaQualitmp[seq(2, length(Gran_BretagnaQualitmp), by = 2)]
+
+Gran_BretagnaQuali = c()
+
+for(x in 1:25)
+{
+  if(is.na(Gran_BretagnaQualiOdd[x]))
+  {
+    Gran_BretagnaQuali[x] = Gran_BretagnaQualiEven[x]
+  }
+  else if(is.na(Gran_BretagnaQualiEven[x]))
+  {
+    Gran_BretagnaQuali[x] = Gran_BretagnaQualiOdd[x]
+  } 
+  else if((Gran_BretagnaQualiOdd[x] > Gran_BretagnaQualiEven[x]))
+  {
+    Gran_BretagnaQuali[x] = Gran_BretagnaQualiEven[x]
+  }
+  else if((Gran_BretagnaQualiOdd[x] < Gran_BretagnaQualiEven[x]))
+  {
+    Gran_BretagnaQuali[x] = Gran_BretagnaQualiOdd[x]
+  }
+}
+
+Gran_BretagnaV10Quali = Gran_BretagnaQuali[1:10]
+Gran_BretagnaV8Quali = Gran_BretagnaQuali[11:16]
+Gran_BretagnaV6Quali = Gran_BretagnaQuali[17:25]
+
+Gran_BretagnaV10QualiMean = sum(Gran_BretagnaV10Quali) / length(Gran_BretagnaV10Quali)
+Gran_BretagnaV8QualiMean = sum(Gran_BretagnaV8Quali) / length(Gran_BretagnaV8Quali)
+Gran_BretagnaV6QualiMean = sum(Gran_BretagnaV6Quali) / length(Gran_BretagnaV6Quali)
+Gran_BretagnaV10QualiMean
+Gran_BretagnaV8QualiMean
+Gran_BretagnaV6QualiMean
+```
+```{r}
+Gran_BretagnaFLaptmp = c()
+
+for(x in 1:50)
+{
+  tmp = str_sub(Gran_Bretagna$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  Gran_BretagnaFLaptmp[x] = tmp2
+}
+
+Gran_BretagnaFLapOdd = Gran_BretagnaFLaptmp[seq(1, length(Gran_BretagnaFLaptmp), by = 2)]
+Gran_BretagnaFLapEven = Gran_BretagnaFLaptmp[seq(2, length(Gran_BretagnaFLaptmp), by = 2)]
+
+Gran_BretagnaFLap = c()
+
+for(x in 1:25)
+{
+  if(is.na(Gran_BretagnaFLapOdd[x]))
+  {
+    Gran_BretagnaFLap[x] = Gran_BretagnaFLapEven[x]
+  }
+  else if(is.na(Gran_BretagnaFLapEven[x]))
+  {
+    Gran_BretagnaFLap[x] = Gran_BretagnaFLapOdd[x]
+  } 
+  else if((Gran_BretagnaFLapOdd[x] > Gran_BretagnaFLapEven[x]))
+  {
+    Gran_BretagnaFLap[x] = Gran_BretagnaFLapEven[x]
+  }
+  else if((Gran_BretagnaFLapOdd[x] < Gran_BretagnaFLapEven[x]))
+  {
+    Gran_BretagnaFLap[x] = Gran_BretagnaFLapOdd[x]
+  }
+}
+
+Gran_BretagnaV10FLap = Gran_BretagnaFLap[1:10]
+Gran_BretagnaV8FLap = Gran_BretagnaFLap[11:16]
+Gran_BretagnaV6FLap = Gran_BretagnaFLap[17:25]
+
+Gran_BretagnaV10FLapMean = sum(Gran_BretagnaV10FLap) / length(Gran_BretagnaV10FLap)
+Gran_BretagnaV8FLapMean = sum(Gran_BretagnaV8FLap) / length(Gran_BretagnaV8FLap)
+Gran_BretagnaV6FLapMean = sum(Gran_BretagnaV6FLap) / length(Gran_BretagnaV6FLap)
+Gran_BretagnaV10FLapMean
+Gran_BretagnaV8FLapMean
+Gran_BretagnaV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2022), y = Gran_BretagnaFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2022), y = Gran_BretagnaFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2022), y = Gran_BretagnaQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2022), y = Gran_BretagnaQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("blue", "red"))
+```
+
+
+
+#MONACO
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+MonacoQualitmp = c()
+
+for(x in 1:48)
+{
+  tmp = str_sub(Monaco$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  MonacoQualitmp[x] = tmp2
+}
+
+MonacoQualiOdd = MonacoQualitmp[seq(1, length(MonacoQualitmp), by = 2)]
+MonacoQualiEven = MonacoQualitmp[seq(2, length(MonacoQualitmp), by = 2)]
+
+MonacoQuali = c()
+
+for(x in 1:24)
+{
+  if(is.na(MonacoQualiOdd[x]))
+  {
+    MonacoQuali[x] = MonacoQualiEven[x]
+  }
+  else if(is.na(MonacoQualiEven[x]))
+  {
+    MonacoQuali[x] = MonacoQualiOdd[x]
+  } 
+  else if((MonacoQualiOdd[x] > MonacoQualiEven[x]))
+  {
+    MonacoQuali[x] = MonacoQualiEven[x]
+  }
+  else if((MonacoQualiOdd[x] < MonacoQualiEven[x]))
+  {
+    MonacoQuali[x] = MonacoQualiOdd[x]
+  }
+}
+
+MonacoV10Quali = MonacoQuali[1:10]
+MonacoV8Quali = MonacoQuali[11:16]
+MonacoV6Quali = MonacoQuali[17:24]
+
+MonacoV10QualiMean = sum(MonacoV10Quali) / length(MonacoV10Quali)
+MonacoV8QualiMean = sum(MonacoV8Quali) / length(MonacoV8Quali)
+MonacoV6QualiMean = sum(MonacoV6Quali) / length(MonacoV6Quali)
+MonacoV10QualiMean
+MonacoV8QualiMean
+MonacoV6QualiMean
+```
+```{r}
+MonacoFLaptmp = c()
+
+for(x in 1:48)
+{
+  tmp = str_sub(Monaco$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  MonacoFLaptmp[x] = tmp2
+}
+
+MonacoFLapOdd = MonacoFLaptmp[seq(1, length(MonacoFLaptmp), by = 2)]
+MonacoFLapEven = MonacoFLaptmp[seq(2, length(MonacoFLaptmp), by = 2)]
+
+MonacoFLap = c()
+
+for(x in 1:24)
+{
+  if(is.na(MonacoFLapOdd[x]))
+  {
+    MonacoFLap[x] = MonacoFLapEven[x]
+  }
+  else if(is.na(MonacoFLapEven[x]))
+  {
+    MonacoFLap[x] = MonacoFLapOdd[x]
+  } 
+  else if((MonacoFLapOdd[x] > MonacoFLapEven[x]))
+  {
+    MonacoFLap[x] = MonacoFLapEven[x]
+  }
+  else if((MonacoFLapOdd[x] < MonacoFLapEven[x]))
+  {
+    MonacoFLap[x] = MonacoFLapOdd[x]
+  }
+}
+
+MonacoV10FLap = MonacoFLap[1:10]
+MonacoV8FLap = MonacoFLap[11:16]
+MonacoV6FLap = MonacoFLap[17:24]
+
+MonacoV10FLapMean = sum(MonacoV10FLap) / length(MonacoV10FLap)
+MonacoV8FLapMean = sum(MonacoV8FLap) / length(MonacoV8FLap)
+MonacoV6FLapMean = sum(MonacoV6FLap) / length(MonacoV6FLap)
+MonacoV10FLapMean
+MonacoV8FLapMean
+MonacoV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2019, 2021, 2022), y = MonacoFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2019, 2021, 2022), y = MonacoFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2019, 2021, 2022), y = MonacoQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2019, 2021, 2022), y = MonacoQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  ggtitle("Tempi Monaco negli anni") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("black", "red"))
+```
+
+
+
+#SPAGNA
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+SpagnaQualitmp = c()
+
+for(x in 1:50)
+{
+  tmp = str_sub(Spagna$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  SpagnaQualitmp[x] = tmp2
+}
+
+SpagnaQualiOdd = SpagnaQualitmp[seq(1, length(SpagnaQualitmp), by = 2)]
+SpagnaQualiEven = SpagnaQualitmp[seq(2, length(SpagnaQualitmp), by = 2)]
+
+SpagnaQuali = c()
+
+for(x in 1:25)
+{
+  if(is.na(SpagnaQualiOdd[x]))
+  {
+    SpagnaQuali[x] = SpagnaQualiEven[x]
+  }
+  else if(is.na(SpagnaQualiEven[x]))
+  {
+    SpagnaQuali[x] = SpagnaQualiOdd[x]
+  } 
+  else if((SpagnaQualiOdd[x] > SpagnaQualiEven[x]))
+  {
+    SpagnaQuali[x] = SpagnaQualiEven[x]
+  }
+  else if((SpagnaQualiOdd[x] < SpagnaQualiEven[x]))
+  {
+    SpagnaQuali[x] = SpagnaQualiOdd[x]
+  }
+}
+
+SpagnaV10Quali = SpagnaQuali[1:10]
+SpagnaV8Quali = SpagnaQuali[11:16]
+SpagnaV6Quali = SpagnaQuali[17:25]
+
+SpagnaV10QualiMean = sum(SpagnaV10Quali) / length(SpagnaV10Quali)
+SpagnaV8QualiMean = sum(SpagnaV8Quali) / length(SpagnaV8Quali)
+SpagnaV6QualiMean = sum(SpagnaV6Quali) / length(SpagnaV6Quali)
+SpagnaV10QualiMean
+SpagnaV8QualiMean
+SpagnaV6QualiMean
+```
+```{r}
+SpagnaFLaptmp = c()
+
+for(x in 1:50)
+{
+  tmp = str_sub(Spagna$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  SpagnaFLaptmp[x] = tmp2
+}
+
+SpagnaFLapOdd = SpagnaFLaptmp[seq(1, length(SpagnaFLaptmp), by = 2)]
+SpagnaFLapEven = SpagnaFLaptmp[seq(2, length(SpagnaFLaptmp), by = 2)]
+
+SpagnaFLap = c()
+
+for(x in 1:25)
+{
+  if(is.na(SpagnaFLapOdd[x]))
+  {
+    SpagnaFLap[x] = SpagnaFLapEven[x]
+  }
+  else if(is.na(SpagnaFLapEven[x]))
+  {
+    SpagnaFLap[x] = SpagnaFLapOdd[x]
+  } 
+  else if((SpagnaFLapOdd[x] > SpagnaFLapEven[x]))
+  {
+    SpagnaFLap[x] = SpagnaFLapEven[x]
+  }
+  else if((SpagnaFLapOdd[x] < SpagnaFLapEven[x]))
+  {
+    SpagnaFLap[x] = SpagnaFLapOdd[x]
+  }
+}
+
+SpagnaV10FLap = SpagnaFLap[1:10]
+SpagnaV8FLap = SpagnaFLap[11:16]
+SpagnaV6FLap = c(SpagnaFLap[17:18], SpagnaFLap[20:25])
+
+SpagnaV10FLapMean = sum(SpagnaV10FLap) / length(SpagnaV10FLap)
+SpagnaV8FLapMean = sum(SpagnaV8FLap) / length(SpagnaV8FLap)
+SpagnaV6FLapMean = sum(SpagnaV6FLap) / (length(SpagnaV6FLap)-1)
+SpagnaV10FLapMean
+SpagnaV8FLapMean
+SpagnaV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2022), y = SpagnaFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2022), y = SpagnaFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2022), y = SpagnaQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2022), y = SpagnaQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("yellow3", "red"))
+```
+
+
+
+#BRASILE
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+BrasileQualitmp = c()
+
+for(x in 1:48)
+{
+  tmp = str_sub(Brasile$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  BrasileQualitmp[x] = tmp2
+}
+
+BrasileQualiOdd = BrasileQualitmp[seq(1, length(BrasileQualitmp), by = 2)]
+BrasileQualiEven = BrasileQualitmp[seq(2, length(BrasileQualitmp), by = 2)]
+
+BrasileQuali = c()
+
+for(x in 1:24)
+{
+  if(is.na(BrasileQualiOdd[x]))
+  {
+    BrasileQuali[x] = BrasileQualiEven[x]
+  }
+  else if(is.na(BrasileQualiEven[x]))
+  {
+    BrasileQuali[x] = BrasileQualiOdd[x]
+  } 
+  else if((BrasileQualiOdd[x] > BrasileQualiEven[x]))
+  {
+    BrasileQuali[x] = BrasileQualiEven[x]
+  }
+  else if((BrasileQualiOdd[x] < BrasileQualiEven[x]))
+  {
+    BrasileQuali[x] = BrasileQualiOdd[x]
+  }
+}
+
+BrasileV10Quali = BrasileQuali[1:10]
+BrasileV8Quali = BrasileQuali[11:16]
+BrasileV6Quali = BrasileQuali[17:24]
+
+BrasileV10QualiMean = sum(BrasileV10Quali) / length(BrasileV10Quali)
+BrasileV8QualiMean = sum(BrasileV8Quali) / length(BrasileV8Quali)
+BrasileV6QualiMean = sum(BrasileV6Quali) / length(BrasileV6Quali)
+BrasileV10QualiMean
+BrasileV8QualiMean
+BrasileV6QualiMean
+```
+```{r}
+BrasileFLaptmp = c()
+
+for(x in 1:48)
+{
+  tmp = str_sub(Brasile$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  BrasileFLaptmp[x] = tmp2
+}
+
+BrasileFLapOdd = BrasileFLaptmp[seq(1, length(BrasileFLaptmp), by = 2)]
+BrasileFLapEven = BrasileFLaptmp[seq(2, length(BrasileFLaptmp), by = 2)]
+
+BrasileFLap = c()
+
+for(x in 1:24)
+{
+  if(is.na(BrasileFLapOdd[x]))
+  {
+    BrasileFLap[x] = BrasileFLapEven[x]
+  }
+  else if(is.na(BrasileFLapEven[x]))
+  {
+    BrasileFLap[x] = BrasileFLapOdd[x]
+  } 
+  else if((BrasileFLapOdd[x] > BrasileFLapEven[x]))
+  {
+    BrasileFLap[x] = BrasileFLapEven[x]
+  }
+  else if((BrasileFLapOdd[x] < BrasileFLapEven[x]))
+  {
+    BrasileFLap[x] = BrasileFLapOdd[x]
+  }
+}
+
+BrasileV10FLap = BrasileFLap[1:10]
+BrasileV8FLap = BrasileFLap[11:16]
+BrasileV6FLap = BrasileFLap[17:24]
+
+BrasileV10FLapMean = sum(BrasileV10FLap) / length(BrasileV10FLap)
+BrasileV8FLapMean = sum(BrasileV8FLap) / length(BrasileV8FLap)
+BrasileV6FLapMean = sum(BrasileV6FLap) / length(BrasileV6FLap)
+BrasileV10FLapMean
+BrasileV8FLapMean
+BrasileV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2019, 2021, 2022), y = BrasileFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2019, 2021, 2022), y = BrasileFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2019, 2021, 2022), y = BrasileQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2019, 2021, 2022), y = BrasileQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("green4", "yellow3"))
+```
+
+
+
+#AUSTRALIA
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+AustraliaQualitmp = c()
+
+for(x in 1:46)
+{
+  tmp = str_sub(Australia$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  AustraliaQualitmp[x] = tmp2
+}
+
+AustraliaQualiOdd = AustraliaQualitmp[seq(1, length(AustraliaQualitmp), by = 2)]
+AustraliaQualiEven = AustraliaQualitmp[seq(2, length(AustraliaQualitmp), by = 2)]
+
+AustraliaQuali = c()
+
+for(x in 1:23)
+{
+  if(is.na(AustraliaQualiOdd[x]))
+  {
+    AustraliaQuali[x] = AustraliaQualiEven[x]
+  }
+  else if(is.na(AustraliaQualiEven[x]))
+  {
+    AustraliaQuali[x] = AustraliaQualiOdd[x]
+  } 
+  else if((AustraliaQualiOdd[x] > AustraliaQualiEven[x]))
+  {
+    AustraliaQuali[x] = AustraliaQualiEven[x]
+  }
+  else if((AustraliaQualiOdd[x] < AustraliaQualiEven[x]))
+  {
+    AustraliaQuali[x] = AustraliaQualiOdd[x]
+  }
+}
+
+AustraliaV10Quali = AustraliaQuali[1:10]
+AustraliaV8Quali = AustraliaQuali[11:16]
+AustraliaV6Quali = AustraliaQuali[17:23]
+
+AustraliaV10QualiMean = sum(AustraliaV10Quali) / length(AustraliaV10Quali)
+AustraliaV8QualiMean = sum(AustraliaV8Quali) / length(AustraliaV8Quali)
+AustraliaV6QualiMean = sum(AustraliaV6Quali) / length(AustraliaV6Quali)
+AustraliaV10QualiMean
+AustraliaV8QualiMean
+AustraliaV6QualiMean
+```
+```{r}
+AustraliaFLaptmp = c()
+
+for(x in 1:46)
+{
+  tmp = str_sub(Australia$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  AustraliaFLaptmp[x] = tmp2
+}
+
+AustraliaFLapOdd = AustraliaFLaptmp[seq(1, length(AustraliaFLaptmp), by = 2)]
+AustraliaFLapEven = AustraliaFLaptmp[seq(2, length(AustraliaFLaptmp), by = 2)]
+
+AustraliaFLap = c()
+
+for(x in 1:23)
+{
+  if(is.na(AustraliaFLapOdd[x]))
+  {
+    AustraliaFLap[x] = AustraliaFLapEven[x]
+  }
+  else if(is.na(AustraliaFLapEven[x]))
+  {
+    AustraliaFLap[x] = AustraliaFLapOdd[x]
+  } 
+  else if((AustraliaFLapOdd[x] > AustraliaFLapEven[x]))
+  {
+    AustraliaFLap[x] = AustraliaFLapEven[x]
+  }
+  else if((AustraliaFLapOdd[x] < AustraliaFLapEven[x]))
+  {
+    AustraliaFLap[x] = AustraliaFLapOdd[x]
+  }
+}
+
+AustraliaV10FLap = AustraliaFLap[1:10]
+AustraliaV8FLap = AustraliaFLap[11:16]
+AustraliaV6FLap = AustraliaFLap[17:23]
+
+AustraliaV10FLapMean = sum(AustraliaV10FLap) / length(AustraliaV10FLap)
+AustraliaV8FLapMean = sum(AustraliaV8FLap) / length(AustraliaV8FLap)
+AustraliaV6FLapMean = sum(AustraliaV6FLap) / length(AustraliaV6FLap)
+AustraliaV10FLapMean
+AustraliaV8FLapMean
+AustraliaV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2019, 2022), y = AustraliaFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2019, 2022), y = AustraliaFLap)) +
+  geom_line(mapping = aes(x = c(1996:2006, 2009:2019, 2022), y = AustraliaQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2006, 2009:2019, 2022), y = AustraliaQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("blue", "red"))
+```
+
+
+
+#BELGIO
+#arrray con i tempi di qualifica e i giri veloci nel corso degli anni
+```{r}
+BelgioQualitmp = c()
+
+for(x in 1:46)
+{
+  tmp = str_sub(Belgio$Quali_time[x], 3, 8)
+  tmp2 = as.double(tmp)
+  BelgioQualitmp[x] = tmp2
+}
+
+BelgioQualiOdd = BelgioQualitmp[seq(1, length(BelgioQualitmp), by = 2)]
+BelgioQualiEven = BelgioQualitmp[seq(2, length(BelgioQualitmp), by = 2)]
+
+BelgioQuali = c()
+
+for(x in 1:23)
+{
+  if(is.na(BelgioQualiOdd[x]))
+  {
+    BelgioQuali[x] = BelgioQualiEven[x]
+  }
+  else if(is.na(BelgioQualiEven[x]))
+  {
+    BelgioQuali[x] = BelgioQualiOdd[x]
+  } 
+  else if((BelgioQualiOdd[x] > BelgioQualiEven[x]))
+  {
+    BelgioQuali[x] = BelgioQualiEven[x]
+  }
+  else if((BelgioQualiOdd[x] < BelgioQualiEven[x]))
+  {
+    BelgioQuali[x] = BelgioQualiOdd[x]
+  }
+}
+
+BelgioQuali[12] = 48.298
+BelgioQuali[14] = BelgioQuali[14]+60
+BelgioQuali[15] = BelgioQuali[15]+60
+BelgioQuali[22] = 59.765
+
+BelgioV10Quali = BelgioQuali[1:9]
+BelgioV8Quali = BelgioQuali[10:14]
+BelgioV6Quali = BelgioQuali[15:23]
+
+BelgioV10QualiMean = sum(BelgioV10Quali) / length(BelgioV10Quali)
+BelgioV8QualiMean = sum(BelgioV8Quali) / length(BelgioV8Quali)
+BelgioV6QualiMean = sum(BelgioV6Quali) / length(BelgioV6Quali)
+BelgioV10QualiMean
+BelgioV8QualiMean
+BelgioV6QualiMean
+```
+```{r}
+BelgioFLaptmp = c()
+
+for(x in 1:46)
+{
+  tmp = str_sub(Belgio$Fastest_lap[x], 3, 8)
+  tmp2 = as.double(tmp)
+  BelgioFLaptmp[x] = tmp2
+}
+
+BelgioFLapOdd = BelgioFLaptmp[seq(1, length(BelgioFLaptmp), by = 2)]
+BelgioFLapEven = BelgioFLaptmp[seq(2, length(BelgioFLaptmp), by = 2)]
+
+BelgioFLap = c()
+
+for(x in 1:23)
+{
+  if(is.na(BelgioFLapOdd[x]))
+  {
+    BelgioFLap[x] = BelgioFLapEven[x]
+  }
+  else if(is.na(BelgioFLapEven[x]))
+  {
+    BelgioFLap[x] = BelgioFLapOdd[x]
+  } 
+  else if((BelgioFLapOdd[x] > BelgioFLapEven[x]))
+  {
+    BelgioFLap[x] = BelgioFLapEven[x]
+  }
+  else if((BelgioFLapOdd[x] < BelgioFLapEven[x]))
+  {
+    BelgioFLap[x] = BelgioFLapOdd[x]
+  }
+}
+
+BelgioFLap[3] = BelgioFLap[3]+60
+
+
+BelgioV10FLap = BelgioFLap[1:9]
+BelgioV8FLap = BelgioFLap[10:14]
+BelgioV6FLap = c(BelgioFLap[15:21], BelgioFLap[23])
+
+BelgioV10FLapMean = sum(BelgioV10FLap) / length(BelgioV10FLap)
+BelgioV8FLapMean = sum(BelgioV8FLap) / length(BelgioV8FLap)
+BelgioV6FLapMean = sum(BelgioV6FLap) / (length(BelgioV6FLap)-1)
+BelgioV10FLapMean
+BelgioV8FLapMean
+BelgioV6FLapMean
+```
+```{r}
+ggplot() +
+  geom_line(mapping = aes(x = c(1996:2002, 2004, 2005, 2009:2022), y = BelgioFLap, colour  ="Gara")) + geom_point(mapping = aes(x = c(1996:2002, 2004, 2005, 2009:2022), y = BelgioFLap)) +
+  geom_line(mapping = aes(x = c(1996:2002, 2004, 2005, 2009:2022), y = BelgioQuali, colour = "Qualifica")) + geom_point(mapping = aes(x = c(1996:2002, 2004, 2005, 2009:2022), y = BelgioQuali)) +
+  xlab("anni") +
+  ylab("Tempo") +
+  scale_color_manual("", breaks = c("Gara", "Qualifica"), values = c("yellow3", "red"))
+```
+
+
+
+
+# grafico che mostra l'evoluzione dei tempi di qualifica su alcuni dei circuiti più iconici della F1
+```{r}
+ggplot() +
+  geom_point(mapping = aes(x = 1, y=c(ItaliaV10QualiMean, ItaliaV8QualiMean, ItaliaV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 2, y=c(BelgioV10QualiMean, BelgioV8QualiMean, BelgioV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 3, y=c(AustraliaV10QualiMean, AustraliaV8QualiMean, AustraliaV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 4, y=c(CanadaV10QualiMean, CanadaV8QualiMean, CanadaV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 5, y=c(SpagnaV10QualiMean, SpagnaV8QualiMean, SpagnaV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 6, y=c(Gran_BretagnaV10QualiMean, Gran_BretagnaV8QualiMean, Gran_BretagnaV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 7, y=c(BrasileV10QualiMean, BrasileV8QualiMean, BrasileV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 8, y=c(UngheriaV10QualiMean, UngheriaV8QualiMean, UngheriaV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 9, y=c(GiapponeV10QualiMean, GiapponeV8QualiMean, GiapponeV6QualiMean), color = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 10, y=c(MonacoV10QualiMean, MonacoV8QualiMean, MonacoV6QualiMean), color = c("V10", "V8", "V6"))) +
+  ggtitle("V6, V8, V10 qualifiche a confronto") +
+  xlab("ITA        BEL        AUS       CAN       SPA        UK       BRA        HUN       JPN       MON") +
+  ylab("tempo") +
+  scale_colour_manual("",breaks = c("V10", "V8", "V6"), values = c("red", "darkblue", "cyan3"))
+
+#nel ylab vengono sonteggiati solo i secondi visto che tutti i circuiti sono 1 minuto + delta
+```
+
+
+
+# grafico che mostra l'evoluzione dei tempi dei giri veloci su alcuni dei circuiti più iconici della F1
+```{r}
+ggplot() +
+  geom_point(mapping = aes(x = 1, y=c(ItaliaV10FLapMean, ItaliaV8FLapMean, ItaliaV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 2, y=c(BelgioV10FLapMean, BelgioV8FLapMean, BelgioV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 3, y=c(AustraliaV10FLapMean, AustraliaV8FLapMean, AustraliaV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 4, y=c(CanadaV10FLapMean, CanadaV8FLapMean, CanadaV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 5, y=c(SpagnaV10FLapMean, SpagnaV8FLapMean, SpagnaV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 6, y=c(Gran_BretagnaV10FLapMean, Gran_BretagnaV8FLapMean, Gran_BretagnaV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 7, y=c(BrasileV10FLapMean, BrasileV8FLapMean, BrasileV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 8, y=c(UngheriaV10FLapMean, UngheriaV8FLapMean, UngheriaV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 9, y=c(GiapponeV10FLapMean, GiapponeV8FLapMean, GiapponeV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  geom_point(mapping = aes(x = 10, y=c(MonacoV10FLapMean, MonacoV8FLapMean, MonacoV6FLapMean), colour = c("V10", "V8", "V6"))) +
+  ggtitle("V6, V8, V10 giri veloci a confronto") +
+  xlab("ITA        BEL        AUS       CAN       SPA        UK       BRA        HUN       JPN       MON") +
+  ylab("tempo") +
+  scale_colour_manual("",breaks = c("V10", "V8", "V6"), values = c("red", "darkblue", "cyan3"))
+
+
+#nel ylab vengono conteggiati solo i secondi visto che tutti i circuiti sono 1 minuto + delta
+```
+Dai grafici possiamo capire che nelle piste a basso carico aereodinamico come Monza o Spa il motore V10 riesce a far fronte alla più avanzata aereodinamica dei V8 ma soprattutto dei V6 mentre per piste come Monaco, dove il carico aereodinamico conta parecchio, i motori V6 la fanno da padrona.
+
+
+CONCLUSIONE
+Possiamo convenire che il pilota più dominante in gara è Lewis Hamilton, mentre se si cerca il giro Perfetto il pilota più forte risulta essere Vettel con una percentuale mostruosa di pole position e infine, se consideriamo il miglior prime, ne esce vincitore Schumacher con un 2002 da sogno. C’è da ricordare che l’affidabilità è andata aumentando nel tempo e chissà come sarebbe andata se i piloti avessero corso a pari condizioni?
